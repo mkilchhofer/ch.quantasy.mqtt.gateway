@@ -57,15 +57,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 
@@ -83,7 +81,7 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
 
     private final Map<String, Deque<MqttMessage>> intentMap;
     private final HashMap<String, MqttMessage> statusMap;
-    private final HashMap<String, LinkedList<Object>> eventMap;
+    private final HashMap<String, Deque<GCEvent>> eventMap;
     private final HashMap<String, MqttMessage> contractDescriptionMap;
 
     /**
@@ -152,9 +150,9 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
         communication.connect(parameters);
 
         communication.publishActualWill(contract.ONLINE.getBytes());
-        for (String subscription : messageConsumerMap.keySet()) {
+        messageConsumerMap.keySet().forEach((subscription) -> {
             communication.subscribe(subscription, 1);
-        }
+        });
     }
 
     public void disconnect() throws MqttException {
@@ -163,9 +161,9 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
         }
         try {
             communication.publishActualWill(getMapper().writeValueAsBytes(Boolean.FALSE));
-            for (String subscription : messageConsumerMap.keySet()) {
+            messageConsumerMap.keySet().forEach((subscription) -> {
                 communication.unsubscribe(subscription);
-            }
+            });
         } catch (JsonProcessingException ex) {
             Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -230,9 +228,9 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
             return message;
         }
         //For the event, all per topic are of interest. Hence a List of events is returned.
-        List<Object> eventList = eventMap.get(topic);
+        Deque<GCEvent> eventList = eventMap.get(topic);
         if (eventList != null) {
-            eventMap.put(topic, new LinkedList<>());
+            eventMap.put(topic, new ConcurrentLinkedDeque<>());
             try {
                 message = new MqttMessage(getMapper().writeValueAsBytes(eventList));
                 message.setQos(1);
@@ -281,7 +279,7 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
             topic = topic + "/" + contract.INSTANCE;
             Deque<MqttMessage> intents = intentMap.get(topic);
             if (intents == null) {
-                intents = new LinkedList<>();
+                intents = new ConcurrentLinkedDeque<>();
                 intentMap.put(topic, intents);
             }
             intents.add(message);
@@ -314,9 +312,9 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
         if (event == null) {
             return;
         }
-        LinkedList<Object> eventList = eventMap.get(topic);
+        Deque<GCEvent> eventList = eventMap.get(topic);
         if (eventList == null) {
-            eventList = new LinkedList<>();
+            eventList = new ConcurrentLinkedDeque<>();
             eventMap.put(topic, eventList);
         }
         eventList.addFirst(event);
@@ -375,31 +373,25 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
         if (this.connectionFuture != null) {
             return;
         }
-        connectionFuture = TIMER_SERVICE.scheduleAtFixedRate(
-                new Runnable() {
+        connectionFuture = TIMER_SERVICE.scheduleAtFixedRate(() -> {
+            try {
+                if (connectionFuture != null) {
+                    communication.connect(parameters);
+                    connectionFuture.cancel(false);
+                    connectionFuture = null;
 
-            @Override
-            public void run() {
-                try {
-                    if (connectionFuture != null) {
-                        communication.connect(parameters);
-                        connectionFuture.cancel(false);
-                        connectionFuture = null;
+                    communication.publishActualWill(getMapper().writeValueAsBytes(contract.ONLINE));
+                    messageConsumerMap.keySet().forEach((topic) -> {
+                        communication.subscribe(topic, 1);
+                    });
+                    Logger.getLogger(GatewayClient.class
+                            .getName()).log(Level.INFO, "Connection and topic-subscriptions re-established");
 
-                        communication.publishActualWill(getMapper().writeValueAsBytes(contract.ONLINE));
-                        for (String topic : messageConsumerMap.keySet()) {
-                            communication.subscribe(topic, 1);
-                        }
-                        Logger.getLogger(GatewayClient.class
-                                .getName()).log(Level.INFO, "Connection and topic-subscriptions re-established");
-
-                    }
-
-                } catch (JsonProcessingException | MqttException ex) {
-                } catch (Exception ex) {
                 }
+
+            } catch (Exception ex) {
             }
-        }, 0, 3000, TimeUnit.MILLISECONDS);;
+        }, 0, 3000, TimeUnit.MILLISECONDS);
     }
 
     public static boolean compareTopic(final String actualTopic, final String subscribedTopic) {
@@ -414,29 +406,22 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
         }
         Set<MessageReceiver> messageConsumers = new HashSet<>();
         synchronized (this) {
-            for (String subscribedTopic : this.messageConsumerMap.keySet()) {
-                if (compareTopic(topic, subscribedTopic)) {
-                    messageConsumers.addAll(this.messageConsumerMap.get(subscribedTopic));
-                }
-            }
+            this.messageConsumerMap.keySet().stream().filter((subscribedTopic) -> (compareTopic(topic, subscribedTopic))).forEachOrdered((subscribedTopic) -> {
+                messageConsumers.addAll(this.messageConsumerMap.get(subscribedTopic));
+            });
         }
         //This way, even if a consumer has been subscribed itself under multiple topic-filters,
         //it is only called once per topic match.
-        for (MessageReceiver consumer : messageConsumers) {
-            EXECUTOR_SERVICE.submit(new Runnable() {
-                @Override
-                //Not so sure if this is a great idea... Check it!
-                public void run() {
-                    try {
-                        consumer.messageReceived(topic, payload);
-                    } catch (Exception ex) {
-                        Logger.getLogger(getClass().
-                                getName()).log(Level.INFO, null, ex);
-                    }
+        messageConsumers.forEach((consumer) -> {
+            EXECUTOR_SERVICE.submit(() -> {
+                try {
+                    consumer.messageReceived(topic, payload);
+                } catch (Exception ex) {
+                    Logger.getLogger(getClass().
+                            getName()).log(Level.INFO, null, ex);
                 }
             });
-
-        }
+        });
 
     }
 

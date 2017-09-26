@@ -52,8 +52,6 @@ public interface MessageReceiver {
      * This is called within a new runnable! Be sure this method is programmed
      * thread safe!
      *
-     * @param gatewayClient This is the gatewayClient (Agent / Service / ...)
-     * through which the message was received.
      * @param topic This String is never null and contains the topic of the mqtt
      * message.
      * @param payload This byte[] is never null and contains the payload of the

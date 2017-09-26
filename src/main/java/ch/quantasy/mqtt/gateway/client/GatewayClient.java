@@ -72,11 +72,11 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
  * @author reto
  * @param <S>
  */
-public class GatewayClient<S extends AClientContract> implements MQTTCommunicationCallback {
+public class GatewayClient<S extends AServiceContract> implements MQTTCommunicationCallback {
 
     private final MQTTParameters parameters;
     private final S contract;
-    private final MQTTCommunication communication;
+    public final MQTTCommunication communication;
     private final Map<String, Set<MessageReceiver>> messageConsumerMap;
 
     private final Map<String, Deque<MqttMessage>> intentMap;
@@ -198,7 +198,7 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
         communication.unsubscribe(topic);
     }
 
-    public Set<String> getSubscriptionTopics() {
+    public synchronized Set<String> getSubscriptionTopics() {
         return messageConsumerMap.keySet();
     }
 
@@ -215,45 +215,83 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
         return contract.getObjectMapper();
     }
 
+    /**
+     * Due to the underlying ideology, there is a distinction of 4 different
+     * Message-Types:
+     * <ul>
+     * <li>Status:
+     * <p>
+     * The very latest status for this topic is taken (copied form the
+     * statusMap) and packed in an MQTT Message.</p></li>
+     * <li>Description:
+     * <p>
+     * The very latest description for this topic is taken (copied from the
+     * descriptionMap) and packed in an MQTT-Message</p></li>
+     * <li>Event:
+     * <p>
+     * All events that have accumulated within a list are taken (removed from
+     * the Event-Topic-Map) and packed in an MQTT Message.</p></li>
+     * <li>Intent:
+     * <p>
+     * The oldest intent that resides within the intent-queue is taken and
+     * packed in an MQTT-Message. If the queue is not yet empty, the publisher
+     * is notified <readyToPublsh)</p></li> </ul>
+     *
+     * @pa
+     *
+     * ram topic
+     * @return
+     */
     @Override
-    public MqttMessage getMessageToPublish(String topic) {
+    public MqttMessage manageMessageToPublish(String topic) {
         //For the status, only the latest one per topic is of interest.
-        MqttMessage message = statusMap.get(topic);
-        if (message != null) {
-            return message;
-        }
-        //For the contract, only the latest one per topic is of interest.
-        message = contractDescriptionMap.get(topic);
-        if (message != null) {
-            return message;
-        }
-        //For the event, all per topic are of interest. Hence a List of events is returned.
-        Deque<GCEvent> eventList = eventMap.get(topic);
-        if (eventList != null) {
-            eventMap.put(topic, new ConcurrentLinkedDeque<>());
-            try {
-                message = new MqttMessage(getMapper().writeValueAsBytes(eventList));
-                message.setQos(1);
-                message.setRetained(true);
+        synchronized (statusMap) {
+            MqttMessage message = statusMap.get(topic);
+            if (message != null) {
                 return message;
-            } catch (JsonProcessingException ex) {
-                Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        //For the contract, only the latest one per topic is of interest.
+        synchronized (contractDescriptionMap) {
+            MqttMessage message = contractDescriptionMap.get(topic);
+            if (message != null) {
+                return message;
+            }
+        }
+        //For the event, all per topic are of interest. Hence an MqttMessage containing a list of events is returned.
+        synchronized (eventMap) {
+            Deque<GCEvent> eventList = eventMap.get(topic);
+            if (eventList != null) {
+                eventMap.put(topic, new ConcurrentLinkedDeque<>());
+                try {
+                    MqttMessage message = new MqttMessage(getMapper().writeValueAsBytes(eventList));
+                    message.setQos(1);
+                    message.setRetained(true);
+                    return message;
+                } catch (JsonProcessingException ex) {
+                    Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         }
         //For the intent, each of which per topic is of interest. Hence one after the other is called.
-        Deque<MqttMessage> intents = intentMap.get(topic);
-        if (intents != null) {
-            MqttMessage intent = intents.pollFirst();
-            if (!intents.isEmpty()) {
-                communication.readyToPublish(this, topic);
+        synchronized (intentMap) {
+            Deque<MqttMessage> intents = intentMap.get(topic);
+            if (intents != null) {
+                MqttMessage intent = intents.pollFirst();
+                if (!intents.isEmpty()) {
+                    communication.readyToPublish(this, topic);
+                }
+                return intent;
             }
-            return intent;
         }
         return null;
     }
 
     public void clearIntents(String topic) {
-        intentMap.put(topic, null);
+        synchronized (intentMap) {
+            intentMap.put(topic, null);
+        }
     }
 
     /**
@@ -269,20 +307,22 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
     public void publishIntent(String topic, Object intent) {
         try {
             MqttMessage message;
-            if (intent != null) {
-                message = new MqttMessage(getMapper().writeValueAsBytes(intent));
-            } else {
+            if (intent == null) {
                 message = new MqttMessage();
+            } else {
+                message = new MqttMessage(getMapper().writeValueAsBytes(intent));
             }
             message.setQos(1);
             message.setRetained(true);
             topic = topic + "/" + contract.INSTANCE;
-            Deque<MqttMessage> intents = intentMap.get(topic);
-            if (intents == null) {
-                intents = new ConcurrentLinkedDeque<>();
-                intentMap.put(topic, intents);
+            synchronized (intentMap) {
+                Deque<MqttMessage> intents = intentMap.get(topic);
+                if (intents == null) {
+                    intents = new ConcurrentLinkedDeque<>();
+                    intentMap.put(topic, intents);
+                }
+                intents.add(message);
             }
-            intents.add(message);
             communication.readyToPublish(this, topic);
 
         } catch (JsonProcessingException ex) {
@@ -301,23 +341,34 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
      * @param timestamp
      */
     public void publishEvent(String topic, Object eventValue, long timestamp) {
-        publishEvent(topic, new GCEvent<>(eventValue, timestamp));
+        GCEvent gcEvent = null;
+        if (eventValue != null) {
+            gcEvent = new GCEvent<>(eventValue, timestamp);
+        }
+        publishEvent(topic, gcEvent);
+
     }
 
     public void publishEvent(String topic, Object eventValue) {
-        publishEvent(topic, new GCEvent<>(eventValue));
+        GCEvent gcEvent = null;
+        if (eventValue != null) {
+            gcEvent = new GCEvent<>(eventValue);
+        }
+        publishEvent(topic, gcEvent);
     }
 
     public void publishEvent(String topic, GCEvent event) {
         if (event == null) {
             return;
         }
-        Deque<GCEvent> eventList = eventMap.get(topic);
-        if (eventList == null) {
-            eventList = new ConcurrentLinkedDeque<>();
-            eventMap.put(topic, eventList);
+        synchronized (eventMap) {
+            Deque<GCEvent> eventList = eventMap.get(topic);
+            if (eventList == null) {
+                eventList = new ConcurrentLinkedDeque<>();
+                eventMap.put(topic, eventList);
+            }
+            eventList.addFirst(event);
         }
-        eventList.addFirst(event);
         this.communication.readyToPublish(this, topic);
     }
 
@@ -332,15 +383,18 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
     public void publishStatus(String topic, Object status) {
         try {
             MqttMessage message;
-            if (status != null) {
-                message = new MqttMessage(getMapper().writeValueAsBytes(status));
-            } else {
+            if (status == null) {
                 message = new MqttMessage();
+            } else {
+                message = new MqttMessage(getMapper().writeValueAsBytes(status));
+
             }
             message.setQos(1);
             message.setRetained(true);
-            statusMap.put(topic, message);
-            communication.readyToPublish(this, topic);
+            synchronized (statusMap) {
+                statusMap.put(topic, message);
+                communication.readyToPublish(this, topic);
+            }
 
         } catch (JsonProcessingException ex) {
             Logger.getLogger(GatewayClient.class
@@ -353,10 +407,11 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
             MqttMessage message = new MqttMessage(getMapper().writeValueAsBytes(description));
             message.setQos(1);
             message.setRetained(true);
-
             topic = topic.replaceFirst(getContract().CANONICAL_TOPIC, "");
             String descriptionTopic = getContract().DESCRIPTION + topic;
-            contractDescriptionMap.put(descriptionTopic, message);
+            synchronized (contractDescriptionMap) {
+                contractDescriptionMap.put(descriptionTopic, message);
+            }
             communication.readyToPublish(this, descriptionTopic);
 
         } catch (JsonProcessingException ex) {
@@ -401,11 +456,11 @@ public class GatewayClient<S extends AClientContract> implements MQTTCommunicati
     @Override
     public void messageArrived(String topic, MqttMessage mm) {
         byte[] payload = mm.getPayload();
-        if (payload == null) {
+        if (payload == null || payload.length == 0) {
             return;
         }
         Set<MessageReceiver> messageConsumers = new HashSet<>();
-        synchronized (this) {
+        synchronized (messageConsumerMap) {
             this.messageConsumerMap.keySet().stream().filter((subscribedTopic) -> (compareTopic(topic, subscribedTopic))).forEachOrdered((subscribedTopic) -> {
                 messageConsumers.addAll(this.messageConsumerMap.get(subscribedTopic));
             });

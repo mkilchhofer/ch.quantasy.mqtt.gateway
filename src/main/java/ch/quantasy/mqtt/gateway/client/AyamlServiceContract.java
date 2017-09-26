@@ -43,38 +43,57 @@
 package ch.quantasy.mqtt.gateway.client;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  *
  * @author reto
  */
-public abstract class AjsonClientContract extends AClientContract {
+public abstract class AyamlServiceContract extends AServiceContract {
 
     private final ObjectMapper mapper;
 
-    public AjsonClientContract(String rootContext, String baseClass) {
+    public AyamlServiceContract(String rootContext, String baseClass) {
         this(rootContext, baseClass, null);
     }
 
-    public AjsonClientContract(String rootContext, String baseClass, String instance) {
+    public AyamlServiceContract(String rootContext, String baseClass, String instance) {
         super(rootContext, baseClass, instance);
-        mapper = new ObjectMapper(new JsonFactory());
+        mapper = new ObjectMapper(new YAMLFactory());
         mapper.setVisibility(VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY)
                 .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
                 .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
                 .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
         mapper.configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true);
+
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
     public ObjectMapper getObjectMapper() {
         return mapper;
+    }
+
+    public String toMD() {
+        String toMD = "";
+        Map<String, String> descriptions = new TreeMap<>();
+        describe(descriptions);
+        toMD += "### " + BASE_CLASS + "\n";
+        for (Map.Entry<String, String> entry : descriptions.entrySet()) {
+            String key = entry.getKey();
+            String value = "   " + entry.getValue();
+            value = value.replaceAll("\n", "\n   ");
+            toMD += "```\n";
+            toMD += key + "\n" + value + "\n";
+            toMD += "```\n";
+        }
+        return toMD;
     }
 }

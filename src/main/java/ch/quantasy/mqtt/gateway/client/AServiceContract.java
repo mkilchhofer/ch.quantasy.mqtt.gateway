@@ -51,7 +51,7 @@ import java.util.Objects;
  *
  * @author reto
  */
-public abstract class AClientContract {
+public abstract class AServiceContract {
 
     public final String ROOT_CONTEXT;
     public final String INSTANCE;
@@ -67,11 +67,11 @@ public abstract class AClientContract {
     public final String INTENT;
     public final String DESCRIPTION;
 
-    public AClientContract(String rootContext, String baseClass) {
+    public AServiceContract(String rootContext, String baseClass) {
         this(rootContext, baseClass, null);
     }
 
-    public AClientContract(String rootContext, String baseClass, String instance) {
+    public AServiceContract(String rootContext, String baseClass, String instance) {
         ROOT_CONTEXT = rootContext;
         BASE_CLASS = baseClass;
         BASE_TOPIC = ROOT_CONTEXT + "/" + BASE_CLASS;
@@ -125,7 +125,7 @@ public abstract class AClientContract {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final AClientContract other = (AClientContract) obj;
+        final AServiceContract other = (AServiceContract) obj;
         if (!Objects.equals(this.CANONICAL_TOPIC, other.CANONICAL_TOPIC)) {
             return false;
         }

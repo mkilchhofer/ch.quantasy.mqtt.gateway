@@ -50,5 +50,5 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public interface PublisherCallback {
 
-    public MqttMessage getMessageToPublish(String topic);
+    public MqttMessage manageMessageToPublish(String topic);
 }

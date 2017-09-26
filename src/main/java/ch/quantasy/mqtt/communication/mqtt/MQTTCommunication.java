@@ -198,8 +198,6 @@ public class MQTTCommunication implements IMqttActionListener {
     }
 
     class Publisher implements Runnable {
-        
-        
 
         private final BlockingDeque<PublishRequest> publishingQueue;
 
@@ -207,12 +205,14 @@ public class MQTTCommunication implements IMqttActionListener {
             this.publishingQueue = new LinkedBlockingDeque<>();
         }
 
-        public synchronized void readyToPublish(PublisherCallback callback, String topic) {
+        public void readyToPublish(PublisherCallback callback, String topic) {
             PublishRequest publishRequest = new PublishRequest(callback, topic);
-            if (this.publishingQueue.contains(publishRequest)) {
-                return;
+            synchronized (publishingQueue) {
+                if (this.publishingQueue.contains(publishRequest)) {
+                    return;
+                }
+                this.publishingQueue.add(publishRequest);
             }
-            this.publishingQueue.add(publishRequest);
             return;
         }
 
@@ -220,8 +220,12 @@ public class MQTTCommunication implements IMqttActionListener {
         public void run() {
             while (!timeToQuit) {
                 try {
-                    PublishRequest publishRequest = publishingQueue.take();
+
+                    PublishRequest publishRequest = null;
+                    publishRequest = publishingQueue.take();
+
                     MqttMessage message = publishRequest.getMessage();
+
                     while (message != null) {
                         synchronized (MQTTCommunication.this) {
                             while (!MQTTCommunication.this.isConnected()) {
@@ -241,9 +245,11 @@ public class MQTTCommunication implements IMqttActionListener {
 
                     }
                 } catch (InterruptedException | MqttException ex) {
-                    Logger.getLogger(MQTTCommunication.class.getName()).log(Level.SEVERE, null, ex);
+
                     if (timeToQuit) {
                         return;
+                    } else {
+                        Logger.getLogger(MQTTCommunication.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             }
@@ -261,7 +267,7 @@ public class MQTTCommunication implements IMqttActionListener {
         }
 
         public MqttMessage getMessage() {
-            return this.publisherCallback.getMessageToPublish(topic);
+            return this.publisherCallback.manageMessageToPublish(topic);
         }
 
         @Override

@@ -237,9 +237,7 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
      * packed in an MQTT-Message. If the queue is not yet empty, the publisher
      * is notified <readyToPublsh)</p></li> </ul>
      *
-     * @pa
-     *
-     * ram topic
+     * @param topic
      * @return
      */
     @Override
@@ -296,8 +294,9 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
 
     /**
      * Convenience method, in order to send some intent to a topic. The intent
-     * is guaranteed to be sent as soon as possible within order. This method
-     * should not be used if the GatewayClient serves a service. This method
+     * is guaranteed to be sent as soon as possible within order. 
+     * The content of the intent is copied, hence it is safe to reuse the intent.
+     * This method should not be used if the GatewayClient serves a service. This method
      * should be used by Servants (in order to orchestrate services) and Agents
      * (in order to choreograph Servants)
      *
@@ -374,7 +373,9 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
 
     /**
      * The most recent status for the same topic is beeing sent as soon as
-     * possible. This may result in a loss of some status, as the services
+     * possible. 
+     * The content of the status is copied, hence it is safe to reuse the status.
+     * This may result in a loss of some status, as the services
      * changes the status before the old one could have been sent.
      *
      * @param topic

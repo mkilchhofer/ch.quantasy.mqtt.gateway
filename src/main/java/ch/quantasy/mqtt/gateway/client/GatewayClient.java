@@ -42,6 +42,8 @@
  */
 package ch.quantasy.mqtt.gateway.client;
 
+import ch.quantasy.mqtt.gateway.client.message.MessageReceiver;
+import ch.quantasy.mqtt.gateway.client.contract.AServiceContract;
 import ch.quantasy.mqtt.communication.mqtt.MQTTCommunication;
 import ch.quantasy.mqtt.communication.mqtt.MQTTCommunicationCallback;
 import ch.quantasy.mqtt.communication.mqtt.MQTTParameters;
@@ -76,12 +78,11 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
 
     private final MQTTParameters parameters;
     private final S contract;
-    public final MQTTCommunication communication;
+    private final MQTTCommunication communication;
     private final Map<String, Set<MessageReceiver>> messageConsumerMap;
 
     private final Map<String, Deque<MqttMessage>> intentMap;
     private final HashMap<String, MqttMessage> statusMap;
-    private final HashMap<String, Deque<GCEvent>> eventMap;
     private final HashMap<String, MqttMessage> contractDescriptionMap;
 
     /**
@@ -104,7 +105,6 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
         messageConsumerMap = new HashMap<>();
         intentMap = new HashMap<>();
         statusMap = new HashMap<>();
-        eventMap = new HashMap<>();
         contractDescriptionMap = new HashMap<>();
         communication = new MQTTCommunication();
         parameters = new MQTTParameters();
@@ -129,6 +129,10 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
     public MQTTParameters getParameters() {
         return parameters;
     }
+
+    public MQTTCommunication getCommunication() {
+        return communication;
+    }  
 
     public void quit() {
         try {
@@ -257,21 +261,7 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
                 return message;
             }
         }
-        //For the event, all per topic are of interest. Hence an MqttMessage containing a list of events is returned.
-        synchronized (eventMap) {
-            Deque<GCEvent> eventList = eventMap.get(topic);
-            if (eventList != null) {
-                eventMap.put(topic, new ConcurrentLinkedDeque<>());
-                try {
-                    MqttMessage message = new MqttMessage(getMapper().writeValueAsBytes(eventList));
-                    message.setQos(1);
-                    message.setRetained(true);
-                    return message;
-                } catch (JsonProcessingException ex) {
-                    Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        }
+        
         //For the intent, each of which per topic is of interest. Hence one after the other is called.
         synchronized (intentMap) {
             Deque<MqttMessage> intents = intentMap.get(topic);
@@ -294,9 +284,9 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
 
     /**
      * Convenience method, in order to send some intent to a topic. The intent
-     * is guaranteed to be sent as soon as possible within order. 
-     * The content of the intent is copied, hence it is safe to reuse the intent.
-     * This method should not be used if the GatewayClient serves a service. This method
+     * is guaranteed to be sent as soon as possible within order. The content of
+     * the intent is copied, hence it is safe to reuse the intent. This method
+     * should not be used if the GatewayClient serves a service. This method
      * should be used by Servants (in order to orchestrate services) and Agents
      * (in order to choreograph Servants)
      *
@@ -330,52 +320,11 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
         }
     }
 
-    /**
-     * Each event for the same topic is sent within an array, as soon as sending
-     * becomes possible. This may result in an array of multiple events, whereas
-     * the most recent event will be at position 0.
-     *
-     * @param topic
-     * @param eventValue
-     * @param timestamp
-     */
-    public void publishEvent(String topic, Object eventValue, long timestamp) {
-        GCEvent gcEvent = null;
-        if (eventValue != null) {
-            gcEvent = new GCEvent<>(eventValue, timestamp);
-        }
-        publishEvent(topic, gcEvent);
-
-    }
-
-    public void publishEvent(String topic, Object eventValue) {
-        GCEvent gcEvent = null;
-        if (eventValue != null) {
-            gcEvent = new GCEvent<>(eventValue);
-        }
-        publishEvent(topic, gcEvent);
-    }
-
-    public void publishEvent(String topic, GCEvent event) {
-        if (event == null) {
-            return;
-        }
-        synchronized (eventMap) {
-            Deque<GCEvent> eventList = eventMap.get(topic);
-            if (eventList == null) {
-                eventList = new ConcurrentLinkedDeque<>();
-                eventMap.put(topic, eventList);
-            }
-            eventList.addFirst(event);
-        }
-        this.communication.readyToPublish(this, topic);
-    }
-
+    
     /**
      * The most recent status for the same topic is beeing sent as soon as
-     * possible. 
-     * The content of the status is copied, hence it is safe to reuse the status.
-     * This may result in a loss of some status, as the services
+     * possible. The content of the status is copied, hence it is safe to reuse
+     * the status. This may result in a loss of some status, as the services
      * changes the status before the old one could have been sent.
      *
      * @param topic

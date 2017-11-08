@@ -40,7 +40,7 @@
  *  *
  *  *
  */
-package ch.quantasy.mqtt.gateway.client;
+package ch.quantasy.mqtt.gateway.client.contract;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;

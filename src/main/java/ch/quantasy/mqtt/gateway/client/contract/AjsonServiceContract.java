@@ -40,24 +40,39 @@
  *  *
  *  *
  */
-package ch.quantasy.mqtt.gateway.client;
+package ch.quantasy.mqtt.gateway.client.contract;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
 
 /**
  *
  * @author reto
  */
-public interface MessageReceiver {
+public abstract class AjsonServiceContract extends AServiceContract {
 
-    /**
-     * This is called within a new runnable! Be sure this method is programmed
-     * thread safe!
-     *
-     * @param topic This String is never null and contains the topic of the mqtt
-     * message.
-     * @param payload This byte[] is never null and contains the payload of the
-     * mqtt message.
-     * @throws Exception Any exception is handled 'gracefully' within
-     * GatewayClient.
-     */
-    public void messageReceived(String topic, byte[] payload) throws Exception;
+    private final ObjectMapper mapper;
+
+    public AjsonServiceContract(String rootContext, String baseClass) {
+        this(rootContext, baseClass, null);
+    }
+
+    public AjsonServiceContract(String rootContext, String baseClass, String instance) {
+        super(rootContext, baseClass, instance);
+        mapper = new ObjectMapper(new JsonFactory());
+        mapper.setVisibility(VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+                .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true);
+    }
+
+    public ObjectMapper getObjectMapper() {
+        return mapper;
+    }
 }

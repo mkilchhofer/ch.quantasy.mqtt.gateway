@@ -40,18 +40,24 @@
  *  *
  *  *
  */
-package ch.quantasy.mqtt.gateway.client;
+package ch.quantasy.mqtt.gateway.client.contract;
 
+import ch.quantasy.mqtt.gateway.client.GatewayClient;
+import ch.quantasy.mqtt.gateway.client.message.Message;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  *
  * @author reto
  */
 public abstract class AServiceContract {
+
+    private SortedMap<String, Class<? extends Message>> messageTopicMap;
 
     public final String ROOT_CONTEXT;
     public final String INSTANCE;
@@ -90,6 +96,15 @@ public abstract class AServiceContract {
         STATUS_CONNECTION = STATUS + "/connection";
         OFFLINE = "offline";
         ONLINE = "online";
+        this.messageTopicMap = new TreeMap();
+    }
+    
+    public void addMessageTopic(String topic, Class<? extends Message> messageClass){
+        messageTopicMap.put(topic, messageClass);
+    }
+    
+    public SortedMap<String,Class<? extends Message>> getMessageTopicMap(){
+        return this.messageTopicMap;
     }
 
     public void publishContracts(GatewayClient gatewayClient) {
@@ -131,7 +146,5 @@ public abstract class AServiceContract {
         }
         return true;
     }
-    
-    
 
 }

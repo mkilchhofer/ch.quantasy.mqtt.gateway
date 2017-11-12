@@ -70,6 +70,7 @@ public abstract class AjsonServiceContract extends AServiceContract {
                 .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true);
+        mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
     }
 
     public ObjectMapper getObjectMapper() {

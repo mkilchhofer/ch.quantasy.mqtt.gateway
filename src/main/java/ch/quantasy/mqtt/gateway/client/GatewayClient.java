@@ -47,12 +47,15 @@ import ch.quantasy.mqtt.gateway.client.contract.AServiceContract;
 import ch.quantasy.mqtt.communication.mqtt.MQTTCommunication;
 import ch.quantasy.mqtt.communication.mqtt.MQTTCommunicationCallback;
 import ch.quantasy.mqtt.communication.mqtt.MQTTParameters;
+import ch.quantasy.mqtt.gateway.client.message.Message;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.util.Deque;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.logging.Level;
@@ -68,6 +71,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import java.util.Arrays;
 
 /**
  *
@@ -132,7 +136,7 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
 
     public MQTTCommunication getCommunication() {
         return communication;
-    }  
+    }
 
     public void quit() {
         try {
@@ -261,7 +265,7 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
                 return message;
             }
         }
-        
+
         //For the intent, each of which per topic is of interest. Hence one after the other is called.
         synchronized (intentMap) {
             Deque<MqttMessage> intents = intentMap.get(topic);
@@ -320,7 +324,6 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
         }
     }
 
-    
     /**
      * The most recent status for the same topic is beeing sent as soon as
      * possible. The content of the status is copied, hence it is safe to reuse
@@ -402,7 +405,7 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
     public static boolean compareTopic(final String actualTopic, final String subscribedTopic) {
         return actualTopic.matches(subscribedTopic.replaceAll("\\+", "[^/]+").replaceAll("/#", "(|/.*)"));
     }
-
+    
     @Override
     public void messageArrived(String topic, MqttMessage mm) {
         byte[] payload = mm.getPayload();
@@ -432,9 +435,19 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
 
     //This works if the other one is too slow! Test its speed.
     //GatewayClientEvent<PhysicalMemory>[] events = getMapper().readValue(payload, new TypeReference<GatewayClientEvent<PhysicalMemory>[]>() { });
-    public <T> T toEventArray(byte[] payload, Class<?> eventValue) throws Exception {
-        JavaType javaType = getMapper().getTypeFactory().constructParametricType(GCEvent.class, eventValue);
-        JavaType endType = getMapper().getTypeFactory().constructArrayType(javaType);
+//    public <T> T toMessageSet(byte[] payload, Class<?> eventValue) throws Exception {
+//        JavaType javaType = getMapper().getTypeFactory().constructParametricType(GCEvent.class, eventValue);
+//        JavaType endType = getMapper().getTypeFactory().constructArrayType(javaType);
+//        return getMapper().readValue(payload, endType);
+//    }
+    public <T extends Set<? extends Message>> T toMessageSet(byte[] payload, Class<? extends Message> messageClass) throws Exception {
+        JavaType javaType = getMapper().getTypeFactory().constructArrayType(messageClass);
+  //      Set<Message> messageSet = new TreeSet();
+  //      Message[] messages = getMapper().readValue(payload, javaType);
+  //      messageSet.addAll(Arrays.asList(messages));
+  //      return (T) messageSet;
+        JavaType endType = getMapper().getTypeFactory().constructCollectionType(HashSet.class, messageClass);
         return getMapper().readValue(payload, endType);
     }
+
 }

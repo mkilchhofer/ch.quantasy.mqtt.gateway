@@ -85,7 +85,7 @@ public class MessageCollector {
         }
     }
 
-    public void addAll(String topic, Set<Message> messages) {
+    public void add(String topic, Set<Message> messages) {
         if (messages == null) {
             return;
         }
@@ -120,6 +120,29 @@ public class MessageCollector {
         }
     }
 
+    public Message retrieveFirstMessage(String topic) {
+        Message message = null;
+        synchronized (messageMap) {
+            SortedSet<Message> messageSet = messageMap.get(topic);
+            if (messageSet != null && !messageSet.isEmpty()) {
+                message = messageSet.first();
+                messageSet.remove(message);
+            }
+            return message;
+        }
+    }
+
+    public Message retrieveLastMessage(String topic) {
+        Message message = null;
+        synchronized (messageMap) {
+            SortedSet<Message> messageSet = messageMap.get(topic);
+            if (messageSet != null && !messageSet.isEmpty()) {
+                message = messageSet.last();
+                messageSet.remove(message);
+            }
+            return message;
+        }
+    }
     public SortedSet<Message> clearMessages(String topic) {
         if (topic == null) {
             return null;
@@ -127,6 +150,5 @@ public class MessageCollector {
         synchronized (messageMap) {
             return messageMap.remove(topic);
         }
-
     }
 }

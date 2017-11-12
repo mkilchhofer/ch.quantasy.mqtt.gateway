@@ -54,8 +54,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.util.Deque;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.logging.Level;
@@ -71,7 +69,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import java.util.Arrays;
 
 /**
  *
@@ -202,12 +199,16 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
     }
 
     public synchronized void unsubscribe(String topic) {
-        messageConsumerMap.remove(topic);
+        synchronized (messageConsumerMap) {
+            messageConsumerMap.remove(topic);
+        }
         communication.unsubscribe(topic);
     }
 
-    public synchronized Set<String> getSubscriptionTopics() {
-        return messageConsumerMap.keySet();
+    public Set<String> getSubscriptionTopics() {
+        synchronized (messageConsumerMap) {
+            return messageConsumerMap.keySet();
+        }
     }
 
     @Override
@@ -405,7 +406,7 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
     public static boolean compareTopic(final String actualTopic, final String subscribedTopic) {
         return actualTopic.matches(subscribedTopic.replaceAll("\\+", "[^/]+").replaceAll("/#", "(|/.*)"));
     }
-    
+
     @Override
     public void messageArrived(String topic, MqttMessage mm) {
         byte[] payload = mm.getPayload();
@@ -442,10 +443,6 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
 //    }
     public <T extends Set<? extends Message>> T toMessageSet(byte[] payload, Class<? extends Message> messageClass) throws Exception {
         JavaType javaType = getMapper().getTypeFactory().constructArrayType(messageClass);
-  //      Set<Message> messageSet = new TreeSet();
-  //      Message[] messages = getMapper().readValue(payload, javaType);
-  //      messageSet.addAll(Arrays.asList(messages));
-  //      return (T) messageSet;
         JavaType endType = getMapper().getTypeFactory().constructCollectionType(HashSet.class, messageClass);
         return getMapper().readValue(payload, endType);
     }

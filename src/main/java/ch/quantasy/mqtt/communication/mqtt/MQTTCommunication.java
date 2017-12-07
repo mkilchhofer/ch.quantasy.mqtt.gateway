@@ -225,8 +225,8 @@ public class MQTTCommunication implements IMqttActionListener {
                     publishRequest = publishingQueue.take();
 
                     MqttMessage message = publishRequest.getMessage();
-
-                    while (message != null) {
+                    
+                    while (message != null){
                         synchronized (MQTTCommunication.this) {
                             while (!MQTTCommunication.this.isConnected()) {
                                 if (timeToQuit) {

@@ -86,12 +86,21 @@ public class PublishingMessageCollector<S extends AServiceContract> implements P
     public void readyToPublish(String topic) {
         this.gatewayClient.getCommunication().readyToPublish(this, topic);
     }
+    
+    public void clearPublish(String topic){
+        this.getMessageCollector().clearMessages(topic);
+        this.readyToPublish(topic);
+    }
+    
 
     @Override
     public MqttMessage manageMessageToPublish(String topic) {
         MqttMessage message = null;
         if (topic == null) {
             return message;
+        }
+        if(!getMessageCollector().getTopics().contains(topic)){
+            return new MqttMessage();
         }
         SortedSet<Message> messages = getMessageCollector().clearMessages(topic);
         if (messages == null) {

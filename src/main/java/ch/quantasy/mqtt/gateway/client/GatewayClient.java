@@ -252,12 +252,12 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
     @Override
     public MqttMessage manageMessageToPublish(String topic) {
         //For the status, only the latest one per topic is of interest.
-        synchronized (statusMap) {
-            MqttMessage message = statusMap.get(topic);
-            if (message != null) {
-                return message;
-            }
-        }
+//        synchronized (statusMap) {
+//            MqttMessage message = statusMap.get(topic);
+//            if (message != null) {
+//                return message;
+//            }
+//        }
 
         //For the contract, only the latest one per topic is of interest.
         synchronized (contractDescriptionMap) {
@@ -325,36 +325,6 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
         }
     }
 
-    /**
-     * The most recent status for the same topic is beeing sent as soon as
-     * possible. The content of the status is copied, hence it is safe to reuse
-     * the status. This may result in a loss of some status, as the services
-     * changes the status before the old one could have been sent.
-     *
-     * @param topic
-     * @param status
-     */
-    public void publishStatus(String topic, Object status) {
-        try {
-            MqttMessage message;
-            if (status == null) {
-                message = new MqttMessage();
-            } else {
-                message = new MqttMessage(getMapper().writeValueAsBytes(status));
-
-            }
-            message.setQos(1);
-            message.setRetained(true);
-            synchronized (statusMap) {
-                statusMap.put(topic, message);
-                communication.readyToPublish(this, topic);
-            }
-
-        } catch (JsonProcessingException ex) {
-            Logger.getLogger(GatewayClient.class
-                    .getName()).log(Level.SEVERE, null, ex);
-        }
-    }
 
     public void publishDescription(String topic, Object description) {
         try {

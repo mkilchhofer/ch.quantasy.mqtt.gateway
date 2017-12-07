@@ -276,7 +276,7 @@ public abstract class AyamlServiceContract extends AServiceContract {
                     description += field.getName() + ": ";
                     description += "Boolean <true,false> \n";
                 } else if (Enum.class.isAssignableFrom(c)) {
-                    description += enumDescription(field.getType(), indentation);
+                    description += enumDescription(field.getType(), field.getName(),indentation);
                     description += "\n";
                 } else if (c != o && Validator.class.isAssignableFrom(c)) {
                     description += indentation;
@@ -316,9 +316,9 @@ public abstract class AyamlServiceContract extends AServiceContract {
 
     }
 
-    public static String enumDescription(Class enumType, String indentation) {
+    public static String enumDescription(Class enumType, String fieldName, String indentation) {
         String description = indentation;
-        description += enumType.getSimpleName() + ": String <";
+        description += fieldName + ": String <";
         Field[] fields = enumType.getDeclaredFields();
         String separator = "";
         for (Field field : fields) {

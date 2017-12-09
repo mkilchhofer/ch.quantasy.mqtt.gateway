@@ -73,9 +73,11 @@ public class PublishingMessageCollector<S extends AServiceContract> implements P
     }
 
     public void readyToPublish() {
-        for (String topic : this.getMessageCollector().getTopics()) {
-            readyToPublish(topic);
-        }
+        this.messageCollector.getTopics().forEach((topic) -> {
+            readyToPublish((String) topic);
+        });
+        
+        //Why do I have to do this cast here? I cannot understand that?
     }
 
     public void readyToPublish(String topic, Message message) {
@@ -86,12 +88,11 @@ public class PublishingMessageCollector<S extends AServiceContract> implements P
     public void readyToPublish(String topic) {
         this.gatewayClient.getCommunication().readyToPublish(this, topic);
     }
-    
-    public void clearPublish(String topic){
+
+    public void clearPublish(String topic) {
         this.getMessageCollector().clearMessages(topic);
         this.readyToPublish(topic);
     }
-    
 
     @Override
     public MqttMessage manageMessageToPublish(String topic) {
@@ -99,7 +100,7 @@ public class PublishingMessageCollector<S extends AServiceContract> implements P
         if (topic == null) {
             return message;
         }
-        if(!getMessageCollector().getTopics().contains(topic)){
+        if (!getMessageCollector().getTopics().contains(topic)) {
             return new MqttMessage();
         }
         SortedSet<Message> messages = getMessageCollector().clearMessages(topic);

@@ -48,12 +48,13 @@ import ch.quantasy.mqtt.communication.mqtt.MQTTCommunication;
 import ch.quantasy.mqtt.communication.mqtt.MQTTCommunicationCallback;
 import ch.quantasy.mqtt.communication.mqtt.MQTTParameters;
 import ch.quantasy.mqtt.gateway.client.message.Message;
+import ch.quantasy.mqtt.gateway.client.message.MessageCollector;
+import ch.quantasy.mqtt.gateway.client.message.PublishingMessageCollector;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.logging.Level;
@@ -62,7 +63,6 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -82,9 +82,11 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
     private final MQTTCommunication communication;
     private final Map<String, Set<MessageReceiver>> messageConsumerMap;
 
-    private final Map<String, Deque<MqttMessage>> intentMap;
-    private final HashMap<String, MqttMessage> statusMap;
     private final HashMap<String, MqttMessage> contractDescriptionMap;
+    
+    private final MessageCollector collector;
+    private final PublishingMessageCollector<S> publishingCollector;
+
 
     /**
      * One executorService pool for all implemented Services within a JVM
@@ -103,9 +105,9 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
 
     public GatewayClient(URI mqttURI, String clientID, S contract) throws MqttException {
         this.contract = contract;
+        collector=new MessageCollector();
+        publishingCollector=new PublishingMessageCollector(collector,this);
         messageConsumerMap = new HashMap<>();
-        intentMap = new HashMap<>();
-        statusMap = new HashMap<>();
         contractDescriptionMap = new HashMap<>();
         communication = new MQTTCommunication();
         parameters = new MQTTParameters();
@@ -122,6 +124,16 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
         //publishDescription(getContract().STATUS_CONNECTION, "[" + getContract().ONLINE + "|" + getContract().OFFLINE + "]");
         contract.publishContracts(this);
     }
+
+    public PublishingMessageCollector<S> getPublishingCollector() {
+        return publishingCollector;
+    }
+
+    public MessageCollector getCollector() {
+        return collector;
+    }
+    
+    
 
     /**
      *
@@ -225,39 +237,13 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
     }
 
     /**
-     * Due to the underlying ideology, there is a distinction of 4 different
-     * Message-Types:
-     * <ul>
-     * <li>Status:
-     * <p>
-     * The very latest status for this topic is taken (copied form the
-     * statusMap) and packed in an MQTT Message.</p></li>
-     * <li>Description:
-     * <p>
-     * The very latest description for this topic is taken (copied from the
-     * descriptionMap) and packed in an MQTT-Message</p></li>
-     * <li>Event:
-     * <p>
-     * All events that have accumulated within a list are taken (removed from
-     * the Event-Topic-Map) and packed in an MQTT Message.</p></li>
-     * <li>Intent:
-     * <p>
-     * The oldest intent that resides within the intent-queue is taken and
-     * packed in an MQTT-Message. If the queue is not yet empty, the publisher
-     * is notified <readyToPublsh)</p></li> </ul>
+     * This method has to become obsolete...
      *
      * @param topic
      * @return
      */
     @Override
     public MqttMessage manageMessageToPublish(String topic) {
-        //For the status, only the latest one per topic is of interest.
-//        synchronized (statusMap) {
-//            MqttMessage message = statusMap.get(topic);
-//            if (message != null) {
-//                return message;
-//            }
-//        }
 
         //For the contract, only the latest one per topic is of interest.
         synchronized (contractDescriptionMap) {
@@ -268,61 +254,17 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
         }
 
         //For the intent, each of which per topic is of interest. Hence one after the other is called.
-        synchronized (intentMap) {
-            Deque<MqttMessage> intents = intentMap.get(topic);
-            if (intents != null) {
-                MqttMessage intent = intents.pollFirst();
-                if (!intents.isEmpty()) {
-                    communication.readyToPublish(this, topic);
-                }
-                return intent;
-            }
-        }
+//        synchronized (intentMap) {
+//            Deque<MqttMessage> intents = intentMap.get(topic);
+//            if (intents != null) {
+//                MqttMessage intent = intents.pollFirst();
+//                if (!intents.isEmpty()) {
+//                    communication.readyToPublish(this, topic);
+//                }
+//                return intent;
+//            }
+//        }
         return null;
-    }
-
-    public void clearIntents(String topic) {
-        synchronized (intentMap) {
-            intentMap.put(topic, null);
-        }
-    }
-
-    /**
-     * Convenience method, in order to send some intent to a topic. The intent
-     * is guaranteed to be sent as soon as possible within order. The content of
-     * the intent is copied, hence it is safe to reuse the intent. This method
-     * should not be used if the GatewayClient serves a service. This method
-     * should be used by Servants (in order to orchestrate services) and Agents
-     * (in order to choreograph Servants)
-     *
-     * @param topic This is usually the intent topic for some service.
-     * @param intent The actual intent
-     */
-    public void publishIntent(String topic, Object intent) {
-        try {
-            MqttMessage message;
-            if (intent == null) {
-                message = new MqttMessage();
-            } else {
-                message = new MqttMessage(getMapper().writeValueAsBytes(intent));
-            }
-            message.setQos(1);
-            message.setRetained(true);
-            topic = topic + "/" + contract.INSTANCE;
-            synchronized (intentMap) {
-                Deque<MqttMessage> intents = intentMap.get(topic);
-                if (intents == null) {
-                    intents = new ConcurrentLinkedDeque<>();
-                    intentMap.put(topic, intents);
-                }
-                intents.add(message);
-            }
-            communication.readyToPublish(this, topic);
-
-        } catch (JsonProcessingException ex) {
-            Logger.getLogger(GatewayClient.class
-                    .getName()).log(Level.SEVERE, null, ex);
-        }
     }
 
 

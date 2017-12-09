@@ -52,31 +52,31 @@ import java.util.Comparator;
  *
  * @author reto
  */
-public class MessageCollector {
+public class MessageCollector <T extends Message> {
 
-    private final SortedMap<String, SortedSet<Message>> messageMap;
-    private final Comparator<Message> messageComparator;
+    private final SortedMap<String, SortedSet<T>> messageMap;
+    private final Comparator<T> messageComparator;
 
-    public MessageCollector(Comparator<Message> messageComparator) {
+    public MessageCollector(Comparator<T> messageComparator) {
         this.messageComparator = messageComparator;
         this.messageMap = new TreeMap();
     }
 
     public MessageCollector() {
-        this(new Comparator<Message>() {
+        this(new Comparator<T>() {
             @Override
-            public int compare(Message o1, Message o2) {
+            public int compare(T o1, T o2) {
                 return o1.compareTo(o2);
             }
         });
     }
 
-    public void add(String topic, Message message) {
+    public void add(String topic, T message) {
         if (message == null) {
             return;
         }
         synchronized (messageMap) {
-            SortedSet<Message> messageSet = messageMap.get(topic);
+            SortedSet<T> messageSet = messageMap.get(topic);
             if (messageSet == null) {
                 messageSet = new TreeSet<>(messageComparator);
                 messageMap.put(topic, messageSet);
@@ -85,12 +85,12 @@ public class MessageCollector {
         }
     }
 
-    public void add(String topic, Set<Message> messages) {
+    public void add(String topic, Set<T> messages) {
         if (messages == null) {
             return;
         }
         synchronized (messageMap) {
-            SortedSet<Message> messageSet = messageMap.get(topic);
+            SortedSet<T> messageSet = messageMap.get(topic);
             if (messageSet == null) {
                 messageSet = new TreeSet<>(messageComparator);
                 messageMap.put(topic, messageSet);
@@ -105,14 +105,14 @@ public class MessageCollector {
         }
     }
 
-    public SortedSet<Message> getMessages(String topic) {
+    public SortedSet<T> getMessages(String topic) {
         return this.getMessages(topic, this.messageComparator);
     }
 
-    public SortedSet<Message> getMessages(String topic, Comparator<Message> comparator) {
-        SortedSet<Message> messages = new TreeSet(comparator);
+    public SortedSet<T> getMessages(String topic, Comparator<T> comparator) {
+        SortedSet<T> messages = new TreeSet(comparator);
         synchronized (messageMap) {
-            SortedSet<Message> messageSet = messageMap.get(topic);
+            SortedSet<T> messageSet = messageMap.get(topic);
             if (messageSet != null) {
                 messages.addAll(messageSet);
             }
@@ -120,10 +120,10 @@ public class MessageCollector {
         }
     }
 
-    public Message retrieveFirstMessage(String topic) {
-        Message message = null;
+    public T retrieveFirstMessage(String topic) {
+        T message = null;
         synchronized (messageMap) {
-            SortedSet<Message> messageSet = messageMap.get(topic);
+            SortedSet<T> messageSet = messageMap.get(topic);
             if (messageSet != null && !messageSet.isEmpty()) {
                 message = messageSet.first();
                 messageSet.remove(message);
@@ -132,10 +132,10 @@ public class MessageCollector {
         }
     }
 
-    public Message retrieveLastMessage(String topic) {
-        Message message = null;
+    public T retrieveLastMessage(String topic) {
+        T message = null;
         synchronized (messageMap) {
-            SortedSet<Message> messageSet = messageMap.get(topic);
+            SortedSet<T> messageSet = messageMap.get(topic);
             if (messageSet != null && !messageSet.isEmpty()) {
                 message = messageSet.last();
                 messageSet.remove(message);
@@ -143,7 +143,7 @@ public class MessageCollector {
             return message;
         }
     }
-    public SortedSet<Message> clearMessages(String topic) {
+    public SortedSet<T> clearMessages(String topic) {
         if (topic == null) {
             return null;
         }

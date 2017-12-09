@@ -42,6 +42,7 @@
  */
 package ch.quantasy.mqtt.gateway.client.contract;
 
+import ch.quantasy.mqtt.gateway.client.message.Message;
 import ch.quantasy.mqtt.gateway.client.message.Validator;
 import ch.quantasy.mqtt.gateway.client.message.annotations.AValidator;
 import ch.quantasy.mqtt.gateway.client.message.annotations.ArraySize;
@@ -121,7 +122,14 @@ public abstract class AyamlServiceContract extends AServiceContract {
         }
         return toMD;
     }
-    
+
+    @Override
+    protected void describe(Map<String, String> descriptions) {
+        for (Map.Entry<String, Class<? extends Message>> entry : getMessageTopicMap().entrySet()) {
+            descriptions.put(entry.getKey(), getDataFormatDescription(entry.getValue()));
+        }
+    }
+
     public static String getDataFormatDescription(Class o) {
         return getDataFormatDescription(o, "");
     }
@@ -276,7 +284,7 @@ public abstract class AyamlServiceContract extends AServiceContract {
                     description += field.getName() + ": ";
                     description += "Boolean <true,false> \n";
                 } else if (Enum.class.isAssignableFrom(c)) {
-                    description += enumDescription(field.getType(), field.getName(),indentation);
+                    description += enumDescription(field.getType(), field.getName(), indentation);
                     description += "\n";
                 } else if (c != o && Validator.class.isAssignableFrom(c)) {
                     description += indentation;

@@ -103,6 +103,10 @@ public abstract class AServiceContract {
         messageTopicMap.put(topic, messageClass);
     }
     
+    public Class<? extends Message> getMessageClassFor(String topic){
+        return messageTopicMap.get(topic);
+    }
+    
     public SortedMap<String,Class<? extends Message>> getMessageTopicMap(){
         return this.messageTopicMap;
     }

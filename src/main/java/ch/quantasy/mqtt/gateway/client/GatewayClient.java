@@ -63,6 +63,8 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -353,7 +355,7 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
 //        JavaType endType = getMapper().getTypeFactory().constructArrayType(javaType);
 //        return getMapper().readValue(payload, endType);
 //    }
-    public <T extends Set<? extends Message>> T toMessageSet(byte[] payload, Class<? extends Message> messageClass) throws Exception {
+    public <M extends Message> Set<M> toMessageSet(byte[] payload, Class<M> messageClass) throws Exception {
         JavaType javaType = getMapper().getTypeFactory().constructArrayType(messageClass);
         JavaType endType = getMapper().getTypeFactory().constructCollectionType(HashSet.class, messageClass);
         return getMapper().readValue(payload, endType);

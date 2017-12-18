@@ -74,6 +74,9 @@ public abstract class AValidator implements Validator {
                         return false;
                     }
                 }
+                if (object == null) {
+                    continue;
+                }
                 if (field.isAnnotationPresent(ArraySize.class)) {
                     ArraySize annotation = field.getAnnotation(ArraySize.class);
                     int size = -1;
@@ -106,89 +109,88 @@ public abstract class AValidator implements Validator {
                     if (size < annotation.min() || size > annotation.max()) {
                         return false;
                     }
-
                 } else {
-                    if (object != null) {
-                        if (field.isAnnotationPresent(StringSize.class)) {
-                            StringSize annotation = field.getAnnotation(StringSize.class);
-                            if (((String) object).length() < annotation.min()) {
-                                return false;
-                            }
-                            if (((String) object).length() > annotation.max()) {
-                                return false;
+
+                    if (field.isAnnotationPresent(StringSize.class)) {
+                        StringSize annotation = field.getAnnotation(StringSize.class);
+                        if (((String) object).length() < annotation.min()) {
+                            return false;
+                        }
+                        if (((String) object).length() > annotation.max()) {
+                            return false;
+                        }
+                    }
+
+                    if (field.isAnnotationPresent(Period.class)) {
+                        Period annotation = field.getAnnotation(Period.class);
+                        Long value = ((Number) object).longValue();
+                        if (value < annotation.from() || value > annotation.to()) {
+                            return false;
+                        }
+                    }
+                    if (field.isAnnotationPresent(Ranges.class)) {
+                        Ranges annotation = field.getAnnotation(Ranges.class);
+                        Long value = ((Number) object).longValue();
+                        boolean isValid = false;
+                        for (Range range : annotation.values()) {
+                            if (value >= range.from() && value <= range.to()) {
+                                isValid |= true;
+                                break;
                             }
                         }
+                        if (!isValid) {
+                            return false;
+                        }
 
-                        if (field.isAnnotationPresent(Period.class)) {
-                            Period annotation = field.getAnnotation(Period.class);
+                    }
+                    if (field.isAnnotationPresent(Range.class)) {
+                        Range annotation = field.getAnnotation(Range.class);
+                        if (field.isAnnotationPresent(ArraySize.class)) {
+                            //Well check if each entry is within Range...
+                        } else {
                             Long value = ((Number) object).longValue();
                             if (value < annotation.from() || value > annotation.to()) {
                                 return false;
                             }
                         }
-                        if (field.isAnnotationPresent(Ranges.class)) {
-                            Ranges annotation = field.getAnnotation(Ranges.class);
-                            Long value = ((Number) object).longValue();
-                            boolean isValid = false;
-                            for (Range range : annotation.values()) {
-                                if (value >= range.from() && value <= range.to()) {
-                                    isValid |= true;
-                                    break;
-                                }
-                            }
-                            if (!isValid) {
-                                return false;
-                            }
-
+                    }
+                    if (field.isAnnotationPresent(Choice.class)) {
+                        Choice annotation = field.getAnnotation(Choice.class);
+                        String value = object.toString();
+                        if (!Arrays.asList(annotation.values()).contains(value)) {
+                            return false;
                         }
-                        if (field.isAnnotationPresent(Range.class)) {
-                            Range annotation = field.getAnnotation(Range.class);
-                            if (field.isAnnotationPresent(ArraySize.class)) {
-                                //Well check if each entry is within Range...
-                            } else {
-                                Long value = ((Number) object).longValue();
-                                if (value < annotation.from() || value > annotation.to()) {
+                    }
+
+                    if (field.isAnnotationPresent(SetSize.class)) {
+                        SetSize annotation = field.getAnnotation(SetSize.class);
+                        Collection value = ((Collection) object);
+                        if (value.size() < annotation.min() || value.size() > annotation.max()) {
+                            return false;
+                        }
+                        for (Object val : value) {
+                            if (val instanceof Validator) {
+                                if (!((Validator) val).isValid()) {
                                     return false;
                                 }
                             }
                         }
-                        if (field.isAnnotationPresent(Choice.class)) {
-                            Choice annotation = field.getAnnotation(Choice.class);
-                            String value = object.toString();
-                            if (!Arrays.asList(annotation.values()).contains(value)) {
-                                return false;
-                            }
-                        }
 
-                        if (field.isAnnotationPresent(SetSize.class)) {
-                            SetSize annotation = field.getAnnotation(SetSize.class);
-                            Collection value = ((Collection) object);
-                            if (value.size() < annotation.min() || value.size() > annotation.max()) {
-                                return false;
-                            }
-                            for (Object val : value) {
-                                if (val instanceof Validator) {
-                                    if (!((Validator) val).isValid()) {
-                                        return false;
-                                    }
-                                }
-                            }
-
-                        }
-                        if (field.isAnnotationPresent(StringForm.class)) {
-                            StringForm annotation = field.getAnnotation(StringForm.class);
-                            String value = object.toString();
-                            if (!value.matches(annotation.regEx())) {
-                                return false;
-                            }
-                        }
-
-                        if (field.get(this) instanceof Validator) {
-                            if (!((Validator) field.get(this)).isValid()) {
-                                return false;
-                            }
+                    }
+                    if (field.isAnnotationPresent(StringForm.class)) {
+                        StringForm annotation = field.getAnnotation(StringForm.class);
+                        String value = object.toString();
+                        if (!value.matches(annotation.regEx())) {
+                            return false;
                         }
                     }
+
+                    if (field.get(this) instanceof Validator) {
+                        if (!((Validator) field.get(this)).isValid()) {
+                            return false;
+                        }
+                    }
+
                 }
             } catch (Exception ex) {
                 Logger.getLogger(AValidator.class.getName()).log(Level.SEVERE, null, ex);

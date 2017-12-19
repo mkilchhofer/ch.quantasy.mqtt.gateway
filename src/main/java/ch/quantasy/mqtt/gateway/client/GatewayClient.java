@@ -63,8 +63,6 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -179,7 +177,7 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
             return;
         }
         try {
-            communication.publishActualWill(getMapper().writeValueAsBytes(Boolean.FALSE));
+            communication.publishActualWill(contract.getObjectMapper().writeValueAsBytes(Boolean.FALSE));
             messageConsumerMap.keySet().forEach((subscription) -> {
                 communication.unsubscribe(subscription);
             });
@@ -234,9 +232,6 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
         return contract;
     }
 
-    public ObjectMapper getMapper() {
-        return contract.getObjectMapper();
-    }
 
     /**
      * This method has to become obsolete...
@@ -254,25 +249,13 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
                 return message;
             }
         }
-
-        //For the intent, each of which per topic is of interest. Hence one after the other is called.
-//        synchronized (intentMap) {
-//            Deque<MqttMessage> intents = intentMap.get(topic);
-//            if (intents != null) {
-//                MqttMessage intent = intents.pollFirst();
-//                if (!intents.isEmpty()) {
-//                    communication.readyToPublish(this, topic);
-//                }
-//                return intent;
-//            }
-//        }
         return null;
     }
 
 
     public void publishDescription(String topic, Object description) {
         try {
-            MqttMessage message = new MqttMessage(getMapper().writeValueAsBytes(description));
+            MqttMessage message = new MqttMessage(contract.getObjectMapper().writeValueAsBytes(description));
             message.setQos(1);
             message.setRetained(true);
             topic = topic.replaceFirst(getContract().CANONICAL_TOPIC, "");
@@ -303,7 +286,7 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
                     connectionFuture.cancel(false);
                     connectionFuture = null;
 
-                    communication.publishActualWill(getMapper().writeValueAsBytes(contract.ONLINE));
+                    communication.publishActualWill(contract.getObjectMapper().writeValueAsBytes(contract.ONLINE));
                     messageConsumerMap.keySet().forEach((topic) -> {
                         communication.subscribe(topic, 1);
                     });
@@ -356,9 +339,9 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
 //        return getMapper().readValue(payload, endType);
 //    }
     public <M extends Message> Set<M> toMessageSet(byte[] payload, Class<M> messageClass) throws Exception {
-        JavaType javaType = getMapper().getTypeFactory().constructArrayType(messageClass);
-        JavaType endType = getMapper().getTypeFactory().constructCollectionType(HashSet.class, messageClass);
-        return getMapper().readValue(payload, endType);
+        JavaType javaType = contract.getObjectMapper().getTypeFactory().constructArrayType(messageClass);
+        JavaType endType = contract.getObjectMapper().getTypeFactory().constructCollectionType(HashSet.class, messageClass);
+        return contract.getObjectMapper().readValue(payload, endType);
     }
 
 }

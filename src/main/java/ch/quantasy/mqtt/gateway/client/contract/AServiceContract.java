@@ -42,6 +42,7 @@
  */
 package ch.quantasy.mqtt.gateway.client.contract;
 
+import ch.quantasy.mqtt.gateway.client.ConnectionStatus;
 import ch.quantasy.mqtt.gateway.client.GatewayClient;
 import ch.quantasy.mqtt.gateway.client.message.Message;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -97,17 +98,19 @@ public abstract class AServiceContract {
         OFFLINE = "offline";
         ONLINE = "online";
         this.messageTopicMap = new TreeMap();
+        addMessageTopic(STATUS_CONNECTION, ConnectionStatus.class);
+
     }
-    
-    public void addMessageTopic(String topic, Class<? extends Message> messageClass){
+
+    public void addMessageTopic(String topic, Class<? extends Message> messageClass) {
         messageTopicMap.put(topic, messageClass);
     }
-    
-    public Class<? extends Message> getMessageClassFor(String topic){
+
+    public Class<? extends Message> getMessageClassFor(String topic) {
         return messageTopicMap.get(topic);
     }
-    
-    public SortedMap<String,Class<? extends Message>> getMessageTopicMap(){
+
+    public SortedMap<String, Class<? extends Message>> getMessageTopicMap() {
         return this.messageTopicMap;
     }
 
@@ -115,7 +118,6 @@ public abstract class AServiceContract {
 
         Map<String, String> descriptions = new HashMap<>();
         describe(descriptions);
-        descriptions.put(STATUS_CONNECTION, "[" + ONLINE + "|" + OFFLINE + "]");
 
         for (Map.Entry<String, String> description : descriptions.entrySet()) {
             gatewayClient.publishDescription(description.getKey(), description.getValue());

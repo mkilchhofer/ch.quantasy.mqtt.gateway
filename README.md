@@ -9,39 +9,53 @@ This is a wrapper to [paho]'s [MQTT] library and allows to design data driven pr
 </a>
 
 ## Ideology
-Implementing the business-capabilites as micro-Services allows independent development and instanciation of the different aspects.
-[martinFowler]
 
-The different capabilities per micro-service are promoted in form of promises.
-[promiseLinux],[promise] These promises are expressed by contract[contract], hence, each service provides a document based and independent API,
-which is not bound to any programming language.[tolerant]
+This project provides a the messaging extension to reactive programming. Due to mqtt as the underlying message bus, the messaging is agnostic to the programming language.
+This allows the implementing of micro-Services[martinFowler] promoting their capabilities in form of promises[promiseLinux],[promise]. 
+Thus, each service can provide a document based and independent API, which is not bound to any programming language.[tolerant]
 
 
-A message broker (publish subscirbe) is used to handle the flow of documents between the micro-services. The broker does not provide any domain specific business logic.
+A message broker (publish subscribe) is used to handle the flow of documents between the micro-services. The broker does not provide any domain specific business logic.
 
-### Service Class vs. Service Instance
-Every Service instance is a working unit (=U) of its abstract data type (class). Each unit has a distinct identifier <id>.
+This concept foresees the following structure:
+### One Service Class multiple Service Instances
+Every Service class provides a unique API that is valid for any working unit of it (=U), whereas each unit has a distinct identifier <id>.
 
 
 ## API towards MQTT
-The idea of this MQTT-Gateway is to provide some very generic but common API. There is nothing new, the following ideas are borrowed from different design ideologies. The idea
-behind this API is to provide a simple and light-weight communication for the programs that provide mqtt access.
+The idea of this MQTT-Gateway is to provide some very generic but common structure. There is nothing new, the following ideas are borrowed from different design ideologies. The idea
+behind this structure is to provide a simple and light-weight data-flow for the communication.
 
 Per default, the implemented MQTT-Gateway expects [YAML] as data in- and output. However, this can be changed to any text- or binary or even hybrid solution.
 ### Unit
-Each unit (=U) represents an instance of a Service-Class and uses an identifier <id> within its topic in order to be discriminated.
+Each working unit (=U) represents an instance of a Service-Class and uses an identifier <id> within its topic in order to be discriminated.
 
 ### Intent
-The intent (=I) is the way, an MQTT-gateway-client should allow to be controlled / configured. The designer of the program (e.g. micro-service) defines the contracts on what data is accepted as
-input from MQTT.
+The intent (=I) is the way, a working unit can be allow to be controlled / configured.
+The designer of the (micro-)service defines the contracts on what data is accepted as input. The MQTT-gateway-client will subscribes to this topic.
+and thus will promote each publish to this topic to the service. A good pattern for the intent is to define only one intent topic where a very versatile document is accepted.
+
 ### Status
-The status (=S) is the way, an MQTT-gateway-client should express its actual status. The designer of the program (e.g. micro-service) defines the contracts on how this
-internal status is expressed towards MQTT.
+The status (=S) is the way, a working unit can express its actual status.
+The designer of the (micro-)service defines the contracts on what internal state shall be expressed. The MQTT-gateway-client will publish to this topic(s).
+This way, every one interested in a specific status can subscribe to it. A good pattern for the status is to define fine granulated topics per status attribute.
+
 ### Event
-The event (=E) is the way, an MQTT-gateway-client should express expected changes. The designer of the program (e.g. micro-service) defines the contracts on how this
-change is expressed towards MQTT. It is important to notice, that events can occur in bursts. Hence, events are always delivered as arrays of events.
+The event (=E) is the way, a working unit can express expected changes as events. The MQTT-gateway-client will publish to this topic(s)
+The designer of the (micro-)service defines the contracts on what events shall be expressed. A good pattern for the event is to define fine granulated topics per event attribute.
+This way, every one interested in a specific event can subscribe to it.
+
 ### Description
-The description (=D) is the way, an MQTT-gateway-client should express the MQTT-API. This allows to read the possibilities for I, S and E by humans and by machines.
+The description (=D) is the way for the designer to express the abilities of a (micro-)service. The MQTT-gateway-client will publish to this topics. A good pattern for the description is
+to provide the abilities in the form of a data-definition language readable to humans and machines.
+
+### Bursts of Messages
+Due to the nature of the underlying MQTT implementation, it is important to allow Intent / Status / Event to occur as bursts of messages. It is a good pattern to
+expect each message as an array of messages!
+
+<a href="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/Full-Micro-service.svg">
+<img src="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/Full-Micro-service.svg.png" alt="Interface-Diagram" />
+</a>
 
 ## API towards Java
 ### Construction
@@ -58,25 +72,11 @@ When this method is called, the topic for the availability is set to offline and
 When the GatewayClient serves a service, the subscriptions should point to the according intent-topics.
 Per subscription a MessageReceiver has to be provided as callback.
 
-### publishIntent()
-This method sends the message out as a single publish... i.e. if the network is slow, the publishes are queued.
+### getCollector(): MessageCollector
+The mMssageCollector allows to collect messages (i.e. Intent, Event, Status)
 
-This convenience method is used, in order to send some intent to a topic i.e. the intent-topic. As a rule of thumb:
-* This method should never be used if the GatewayClient serves a service.
-* This method should be used if the GatewayClient serves a servant i.e. in order to orchestrate services
-* This method should be used if the GatewayClient serves an Agents i.e. in order to choreograph Servants
-
-### publishStatus()
-This method sends out the very latest message out as a single publish... i.e. if the network is slow, some publishes are lost.
-
-This convenience method is used, in order to send some status to a topic i.e. the status-topic. As a rule of thumb:
-This method should be used in order to provide status information (plural) about the internal program i.e. the service, the GatewayClient serves.
-
-### publishEvent()
-This method sends out the messages as an array of messages in a single publish. Dependent on the network speed, the message-array differs in size.
-
-This convenience method is used, in order to send the events to a topic i.e. the event-topic. As a rule of thumb:
-This method should be used in order to provide events that occur within the internal program i.e. the service, the GatewayClient serves.
+### getPublishingCollector(): PublishingMessageCollector
+The PublishingMessageCollector allows to publish collected messages. They will be sent as arrays of messages per topic.
 
 ### publishDescription()
 This method sends out each message as a single publish... i.e. if the network is slow, the publishes are queued.

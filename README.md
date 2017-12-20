@@ -11,8 +11,8 @@ This is a wrapper to [paho]'s [MQTT] library and allows to design data driven pr
 ## Ideology
 
 This project provides a the messaging extension to reactive programming. Due to mqtt as the underlying message bus, the messaging is agnostic to the programming language.
-This allows the implementing of micro-Services[martinFowler] promoting their capabilities in form of promises[promiseLinux],[promise]. 
-Thus, each service can provide a document based and independent API, which is not bound to any programming language.[tolerant]
+This allows the implementing of micro-Services [martinFowler] promoting their capabilities in form of promises [promiseLinux],[promise]. 
+Thus, each service can provide a document based and independent API, which is not bound to any programming language [tolerant].
 
 
 A message broker (publish subscribe) is used to handle the flow of documents between the micro-services. The broker does not provide any domain specific business logic.
@@ -73,7 +73,7 @@ When the GatewayClient serves a service, the subscriptions should point to the a
 Per subscription a MessageReceiver has to be provided as callback.
 
 ### getCollector(): MessageCollector
-The mMssageCollector allows to collect messages (i.e. Intent, Event, Status)
+The MessageCollector allows to collect messages (i.e. Intent, Event, Status)
 
 ### getPublishingCollector(): PublishingMessageCollector
 The PublishingMessageCollector allows to publish collected messages. They will be sent as arrays of messages per topic.

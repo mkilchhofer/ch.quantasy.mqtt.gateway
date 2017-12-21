@@ -5,30 +5,31 @@ ch.quantasy.mqtt.gateway
 
 This is a wrapper to [paho]'s [MQTT] library and allows to design data driven programs e.g. micro-services supporting the following general API:
 <a href="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/MqttGatewayClient.svg">
-<img src="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/MqttGatewayClient.svg.png" alt="Interface-Diagram" />
+    <img src="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/MqttGatewayClient.svg.png" alt="Interface-Diagram" />
 </a>
 
 ## Ideology
 
-This project provides a the messaging extension to reactive programming. Due to mqtt as the underlying message bus, the messaging is agnostic to the programming language.
-This allows the implementing of micro-Services [martinFowler] promoting their capabilities in form of promises [promiseLinux],[promise]. 
-Thus, each service can provide a document based and independent API, which is not bound to any programming language [tolerant].
-
+This project provides a the messaging extension to reactive programming.
+ Due to mqtt as the underlying message bus, the messaging is agnostic to the programming language.
+This allows the implementing of micro-Services as described by[martinFowler] promoting their capabilities in form of promises as described
+ in [promiseLinux],[promise]. 
+Thus, each service can provide a document based and independent API, which is not bound to any programming language allowing a [tolerant] API.
 
 A message broker (publish subscribe) is used to handle the flow of documents between the micro-services. The broker does not provide any domain specific business logic.
 
 This concept foresees the following structure:
 ### One Service Class multiple Service Instances
-Every Service class provides a unique API that is valid for any working unit of it (=U), whereas each unit has a distinct identifier <id>.
+Every Service class provides a unique API that is valid for any working unit of it (=U), whereas each unit has a distinct identifier `<id>`.
 
 
 ## API towards MQTT
-The idea of this MQTT-Gateway is to provide some very generic but common structure. There is nothing new, the following ideas are borrowed from different design ideologies. The idea
+The idea of this MQTT-Gateway is to provide some very generic but common structure. There is nothing new, the following ideas are all borrowed from different design ideologies. The idea
 behind this structure is to provide a simple and light-weight data-flow for the communication.
 
 Per default, the implemented MQTT-Gateway expects [YAML] as data in- and output. However, this can be changed to any text- or binary or even hybrid solution.
 ### Unit
-Each working unit (=U) represents an instance of a Service-Class and uses an identifier <id> within its topic in order to be discriminated.
+Each working unit (=U) represents an instance of a Service-Class and uses an identifier `<id>` within its topic in order to be discriminated.
 
 ### Intent
 The intent (=I) is the way, a working unit can be allow to be controlled / configured.
@@ -53,9 +54,9 @@ to provide the abilities in the form of a data-definition language readable to h
 Due to the nature of the underlying MQTT implementation, it is important to allow Intent / Status / Event to occur as bursts of messages. It is a good pattern to
 expect each message as an array of messages!
 
-<a href="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/Full-Micro-service.svg">
-<img src="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/Full-Micro-service.svg.png" alt="Interface-Diagram" />
-</a>
+        <a href="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/Full-Micro-service.svg">
+            <img src="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/Full-Micro-service.svg.png" alt="Interface-Diagram" />
+        </a>
 
 ## API towards Java
 ### Construction
@@ -88,9 +89,9 @@ This method should be used in the very beginning only and should not change duri
 ## Full Micro-Service
 With the GatewayClient towards MQTT and the API towards the native programming language (Java), now the following generic composition can be used, in order to
 provide micro-service capabilities to native programs, using a MVP (Model View Presenter) pattern, where the native program serves as 'model' (or source) and the MQTT side serves as 'view'. 
-<a href="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/Micro-service.svg">
-<img src="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/Micro-service.svg.png" alt="Micro-service-Diagram" />
-</a>
+        <a href="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/Micro-service.svg">
+            <img src="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/Micro-service.svg.png" alt="Micro-service-Diagram" />
+        </a>
 
 
 

@@ -12,9 +12,9 @@ This is a wrapper to [paho]'s [MQTT] library and allows to design data driven pr
 
 This project provides a the messaging extension to reactive programming.
  Due to mqtt as the underlying message bus, the messaging is agnostic to the programming language.
-This allows the implementing of micro-Services as described by[martinFowler] promoting their capabilities in form of promises as described
+This allows the implementation of (micro-)services as described by [martinFowler] promoting their capabilities in form of promises as described
  in [promiseLinux],[promise]. 
-Thus, each service can provide a document based and independent API, which is not bound to any programming language allowing a [tolerant] API.
+Thus, each (micro-)service can provide a document based API, which is not bound to any programming language. This allows the API to be [tolerant].
 
 A message broker (publish subscribe) is used to handle the flow of documents between the micro-services. The broker does not provide any domain specific business logic.
 

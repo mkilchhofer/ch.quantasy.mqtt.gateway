@@ -10,7 +10,7 @@ This is a wrapper to [paho]'s [MQTT] library and allows to design data driven pr
 
 ## Ideology
 
-This project provides a the messaging extension to reactive programming.
+This project provides a messaging extension to reactive programming.
  Due to mqtt as the underlying message bus, the messaging is agnostic to the programming language.
 This allows the implementation of (micro-)services as described by [martinFowler] promoting their capabilities in form of promises as described
  in [promiseLinux],[promise]. 

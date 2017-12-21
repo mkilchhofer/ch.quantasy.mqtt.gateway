@@ -59,6 +59,8 @@ expect each message as an array of messages!
         </a>
 
 ## API towards Java
+Here is a concrete implementation of the mqtt-GatewayClient in Java.
+
 ### Construction
 For construction of a GatewayClient. The mqttURI and the clientID is requested as parameters. 
 Furthermore, a so called ClientContract is required. This contract defines the MQTT-Topics for I,S,E and D
@@ -93,12 +95,17 @@ provide micro-service capabilities to native programs, using a MVP (Model View P
             <img src="https://github.com/knr1/ch.quantasy.mqtt.gateway/blob/master/Micro-service.svg.png" alt="Micro-service-Diagram" />
         </a>
 
+# Projects using it
+In order to get a feeling on how to work with this mqtt-GatewayClient, here are some samples:
+* [Dicegame-as-a-Service](https://github.com/knr1/ch.quantasy.iot.mqtt.gateway.tutorial)
+* [Tinkerforge-as-a-Service](https://github.com/knr1/ch.quantasy.tinkerforge.mqtt.gateway) 
+* [Time-as-a-Service](https://github.com/knr1/ch.quantasy.timer.mqtt.gateway)
+* [Mx-Parser-as-a-Service](https://github.com/knr1/ch.quantasy.mXparser.mqtt.gateway)
 
 
 [paho]: <https://github.com/eclipse/paho.mqtt.java>
 [YAML]: <https://en.wikipedia.org/wiki/YAML>
 [MQTT]: <http://mqtt.org/>
-[TiMqWay.jar]: <https://prof.hti.bfh.ch/knr1/TiMqWay.jar>
 [d3Viewer]: <https://github.com/hardillb/d3-MQTT-Topic-Tree>
 [micro-service]: <https://en.wikipedia.org/wiki/Microservices>
 [martinFowler]: <https://martinfowler.com/articles/microservices.html>

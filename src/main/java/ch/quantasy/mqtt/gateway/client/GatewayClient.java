@@ -45,7 +45,6 @@ package ch.quantasy.mqtt.gateway.client;
 import ch.quantasy.mqtt.gateway.client.message.MessageReceiver;
 import ch.quantasy.mqtt.gateway.client.contract.AServiceContract;
 import ch.quantasy.mqtt.communication.mqtt.MQTTCommunication;
-import ch.quantasy.mqtt.communication.mqtt.MQTTCommunicationCallback;
 import ch.quantasy.mqtt.communication.mqtt.MQTTParameters;
 import ch.quantasy.mqtt.gateway.client.message.Message;
 import ch.quantasy.mqtt.gateway.client.message.MessageCollector;
@@ -53,7 +52,6 @@ import ch.quantasy.mqtt.gateway.client.message.PublishingMessageCollector;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -69,13 +67,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
 
 /**
  *
  * @author reto
  * @param <S>
  */
-public class GatewayClient<S extends AServiceContract> implements MQTTCommunicationCallback {
+public class GatewayClient<S extends AServiceContract> implements MqttCallback {
 
     private final MQTTParameters parameters;
     private final S contract;
@@ -132,7 +131,6 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
     public MessageCollector getCollector() {
         return collector;
     }
-    
     
 
     /**
@@ -231,45 +229,7 @@ public class GatewayClient<S extends AServiceContract> implements MQTTCommunicat
     public S getContract() {
         return contract;
     }
-
-
-    /**
-     * This method has to become obsolete...
-     *
-     * @param topic
-     * @return
-     */
-    @Override
-    public MqttMessage manageMessageToPublish(String topic) {
-
-        //For the contract, only the latest one per topic is of interest.
-        synchronized (contractDescriptionMap) {
-            MqttMessage message = contractDescriptionMap.get(topic);
-            if (message != null) {
-                return message;
-            }
-        }
-        return null;
-    }
-
-
-    public void publishDescription(String topic, Object description) {
-        try {
-            MqttMessage message = new MqttMessage(contract.getObjectMapper().writeValueAsBytes(description));
-            message.setQos(1);
-            message.setRetained(true);
-            topic = topic.replaceFirst(getContract().CANONICAL_TOPIC, "");
-            String descriptionTopic = getContract().DESCRIPTION + topic;
-            synchronized (contractDescriptionMap) {
-                contractDescriptionMap.put(descriptionTopic, message);
-            }
-            communication.readyToPublish(this, descriptionTopic);
-
-        } catch (JsonProcessingException ex) {
-            Logger.getLogger(GatewayClient.class
-                    .getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+    
     private ScheduledFuture connectionFuture;
 
     @Override

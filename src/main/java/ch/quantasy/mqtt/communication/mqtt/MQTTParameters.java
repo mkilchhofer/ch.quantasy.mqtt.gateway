@@ -177,7 +177,7 @@ public class MQTTParameters {
         return mqttCallback;
     }
 
-    public void setMqttCallback(MQTTCommunicationCallback mqttCallback) {
+    public void setMqttCallback(MqttCallback mqttCallback) {
         this.mqttCallback = mqttCallback;
     }
 

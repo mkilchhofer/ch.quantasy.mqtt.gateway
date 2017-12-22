@@ -42,24 +42,28 @@
  */
 package ch.quantasy.mqtt.gateway.client.contract;
 
+import ch.quantasy.mqtt.communication.mqtt.PublisherCallback;
 import ch.quantasy.mqtt.gateway.client.ConnectionStatus;
 import ch.quantasy.mqtt.gateway.client.GatewayClient;
 import ch.quantasy.mqtt.gateway.client.message.Message;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 /**
  *
  * @author reto
  */
-public abstract class AServiceContract {
+public abstract class AServiceContract{
 
-    private SortedMap<String, Class<? extends Message>> messageTopicMap;
-
+    private final SortedMap<String, Class<? extends Message>> messageTopicMap;
+    private final ServiceContractPublisher serviceContractPublisher;
     public final String ROOT_CONTEXT;
     public final String INSTANCE;
     public final String CANONICAL_TOPIC;
@@ -97,6 +101,7 @@ public abstract class AServiceContract {
         STATUS_CONNECTION = STATUS + "/connection";
         OFFLINE = "offline";
         ONLINE = "online";
+        this.serviceContractPublisher=new ServiceContractPublisher();
         this.messageTopicMap = new TreeMap();
         addMessageTopic(STATUS_CONNECTION, ConnectionStatus.class);
 
@@ -115,13 +120,7 @@ public abstract class AServiceContract {
     }
 
     public void publishContracts(GatewayClient gatewayClient) {
-
-        Map<String, String> descriptions = new HashMap<>();
-        describe(descriptions);
-
-        for (Map.Entry<String, String> description : descriptions.entrySet()) {
-            gatewayClient.publishDescription(description.getKey(), description.getValue());
-        }
+        this.serviceContractPublisher.publishContracts(gatewayClient,this);
     }
 
     public abstract ObjectMapper getObjectMapper();
@@ -151,6 +150,45 @@ public abstract class AServiceContract {
             return false;
         }
         return true;
+    }
+}
+
+class ServiceContractPublisher implements PublisherCallback {
+    private final SortedMap<String, MqttMessage> mqttMessageDescriptionMap;
+
+    public ServiceContractPublisher() {
+        mqttMessageDescriptionMap = new TreeMap();
+    }
+
+    @Override
+    public MqttMessage manageMessageToPublish(String topic) {
+        MqttMessage message = null;
+        synchronized (mqttMessageDescriptionMap) {
+            message = mqttMessageDescriptionMap.get(topic);
+        }
+        return message;
+    }
+
+    public void publishContracts(GatewayClient gatewayClient, AServiceContract contract) {
+        SortedMap<String, String> descriptions = new TreeMap<>();
+        contract.describe(descriptions);
+        for (Map.Entry<String, String> description : descriptions.entrySet()) {
+            try {
+                MqttMessage message = new MqttMessage(contract.getObjectMapper().writeValueAsBytes(description.getValue()));
+                message.setQos(1);
+                message.setRetained(true);
+                String topic = description.getKey().replaceFirst(contract.CANONICAL_TOPIC, "");
+                String descriptionTopic = contract.DESCRIPTION + topic;
+                synchronized (mqttMessageDescriptionMap) {
+                    mqttMessageDescriptionMap.put(descriptionTopic, message);
+                }
+                gatewayClient.getCommunication().readyToPublish(this, descriptionTopic);
+
+            } catch (JsonProcessingException ex) {
+                Logger.getLogger(GatewayClient.class
+                        .getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 
 }

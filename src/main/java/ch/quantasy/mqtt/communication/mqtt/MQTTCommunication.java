@@ -111,7 +111,7 @@ public class MQTTCommunication implements IMqttActionListener {
         return this.publish(connectionParameters.getWillTopic(), message);
     }
 
-    public void readyToPublish(PublisherCallback publisherCallback, String topic) {
+    public void readyToPublish(MQTTMessageManager publisherCallback, String topic) {
         publisher.readyToPublish(publisherCallback, topic);
     }
 
@@ -205,7 +205,7 @@ public class MQTTCommunication implements IMqttActionListener {
             this.publishingQueue = new LinkedBlockingDeque<>();
         }
 
-        public void readyToPublish(PublisherCallback callback, String topic) {
+        public void readyToPublish(MQTTMessageManager callback, String topic) {
             PublishRequest publishRequest = new PublishRequest(callback, topic);
             synchronized (publishingQueue) {
                 if (this.publishingQueue.contains(publishRequest)) {
@@ -259,15 +259,15 @@ public class MQTTCommunication implements IMqttActionListener {
     class PublishRequest {
 
         public final String topic;
-        public final PublisherCallback publisherCallback;
+        public final MQTTMessageManager publisherCallback;
 
-        public PublishRequest(PublisherCallback publisherCallback, String topic) {
+        public PublishRequest(MQTTMessageManager publisherCallback, String topic) {
             this.topic = topic;
             this.publisherCallback = publisherCallback;
         }
 
         public MqttMessage getMessage() {
-            return this.publisherCallback.manageMessageToPublish(topic);
+            return this.publisherCallback.getMessageFor(topic);
         }
 
         @Override

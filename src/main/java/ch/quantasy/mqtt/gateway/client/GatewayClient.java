@@ -82,10 +82,9 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
     private final Map<String, Set<MessageReceiver>> messageConsumerMap;
 
     private final HashMap<String, MqttMessage> contractDescriptionMap;
-    
+
     private final MessageCollector collector;
     private final PublishingMessageCollector<S> publishingCollector;
-
 
     /**
      * One executorService pool for all implemented Services within a JVM
@@ -104,8 +103,8 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
 
     public GatewayClient(URI mqttURI, String clientID, S contract) throws MqttException {
         this.contract = contract;
-        collector=new MessageCollector();
-        publishingCollector=new PublishingMessageCollector(collector,this);
+        collector = new MessageCollector();
+        publishingCollector = new PublishingMessageCollector(collector, this);
         messageConsumerMap = new HashMap<>();
         contractDescriptionMap = new HashMap<>();
         communication = new MQTTCommunication();
@@ -118,9 +117,6 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         parameters.setServerURIs(mqttURI);
         parameters.setWillTopic(contract.STATUS_CONNECTION);
         parameters.setMqttCallback(this);
-        //communication.connect(parameters);
-        //communication.publishActualWill(contract.ONLINE.getBytes());
-        //publishDescription(getContract().STATUS_CONNECTION, "[" + getContract().ONLINE + "|" + getContract().OFFLINE + "]");
         contract.publishContracts(this);
     }
 
@@ -128,10 +124,26 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         return publishingCollector;
     }
 
+    /**
+     * Convenience Method that calls internal PublishingMessageCollector
+     * @param topic
+     * @param message
+     */
+    public void readyToPublish(String topic, Message message) {
+        publishingCollector.readyToPublish(topic, message);
+    }
+    
+    /**
+     * Convenience method that calls internal PublishingMessageCollector
+     * @param topic 
+     */
+    public void clearPublish(String topic){
+        publishingCollector.clearPublish(topic);
+    }
+
     public MessageCollector getCollector() {
         return collector;
     }
-    
 
     /**
      *
@@ -229,7 +241,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
     public S getContract() {
         return contract;
     }
-    
+
     private ScheduledFuture connectionFuture;
 
     @Override

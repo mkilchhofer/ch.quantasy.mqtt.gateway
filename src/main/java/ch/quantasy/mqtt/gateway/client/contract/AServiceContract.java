@@ -42,7 +42,6 @@
  */
 package ch.quantasy.mqtt.gateway.client.contract;
 
-import ch.quantasy.mqtt.communication.mqtt.PublisherCallback;
 import ch.quantasy.mqtt.gateway.client.ConnectionStatus;
 import ch.quantasy.mqtt.gateway.client.GatewayClient;
 import ch.quantasy.mqtt.gateway.client.message.Message;
@@ -55,6 +54,7 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import ch.quantasy.mqtt.communication.mqtt.MQTTMessageManager;
 
 /**
  *
@@ -153,7 +153,7 @@ public abstract class AServiceContract{
     }
 }
 
-class ServiceContractPublisher implements PublisherCallback {
+class ServiceContractPublisher implements MQTTMessageManager {
     private final SortedMap<String, MqttMessage> mqttMessageDescriptionMap;
 
     public ServiceContractPublisher() {
@@ -161,7 +161,7 @@ class ServiceContractPublisher implements PublisherCallback {
     }
 
     @Override
-    public MqttMessage manageMessageToPublish(String topic) {
+    public MqttMessage getMessageFor(String topic) {
         MqttMessage message = null;
         synchronized (mqttMessageDescriptionMap) {
             message = mqttMessageDescriptionMap.get(topic);

@@ -41,7 +41,6 @@
  */
 package ch.quantasy.mqtt.gateway.client.message;
 
-import ch.quantasy.mqtt.communication.mqtt.PublisherCallback;
 import ch.quantasy.mqtt.gateway.client.GatewayClient;
 import ch.quantasy.mqtt.gateway.client.contract.AServiceContract;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -49,12 +48,13 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.util.SortedSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import ch.quantasy.mqtt.communication.mqtt.MQTTMessageManager;
 
 /**
  *
  * @author reto
  */
-public class PublishingMessageCollector<S extends AServiceContract> implements PublisherCallback {
+public class PublishingMessageCollector<S extends AServiceContract> implements MQTTMessageManager {
 
     private final MessageCollector messageCollector;
     private final GatewayClient<S> gatewayClient;
@@ -95,7 +95,7 @@ public class PublishingMessageCollector<S extends AServiceContract> implements P
     }
 
     @Override
-    public MqttMessage manageMessageToPublish(String topic) {
+    public MqttMessage getMessageFor(String topic) {
         MqttMessage message = null;
         if (topic == null) {
             return message;

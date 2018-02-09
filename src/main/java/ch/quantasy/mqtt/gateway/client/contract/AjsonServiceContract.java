@@ -65,7 +65,7 @@ public abstract class AjsonServiceContract extends AServiceContract {
     public AjsonServiceContract(String rootContext, String baseClass, String instance) {
         super(rootContext, baseClass, instance);
         mapper = new ObjectMapper(new JsonFactory());
-       mapper.setVisibility(VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+        mapper.setVisibility(VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY)
                 .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
                 .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
                 .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));

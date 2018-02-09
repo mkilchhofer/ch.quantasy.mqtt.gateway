@@ -114,7 +114,11 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         parameters.setClientID(clientID);
         parameters.setIsCleanSession(false);
         parameters.setIsLastWillRetained(true);
-        parameters.setLastWillMessage(contract.OFFLINE.getBytes());
+        try {
+            parameters.setLastWillMessage(contract.getObjectMapper().writeValueAsBytes(new ConnectionStatus(contract.OFFLINE)));
+        } catch (JsonProcessingException ex) {
+            Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
         parameters.setLastWillQoS(1);
         parameters.setServerURIs(mqttURI);
         parameters.setWillTopic(contract.STATUS_CONNECTION);
@@ -128,18 +132,20 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
 
     /**
      * Convenience Method that calls internal PublishingMessageCollector
+     *
      * @param topic
      * @param message
      */
     public void readyToPublish(String topic, Message message) {
         publishingCollector.readyToPublish(topic, message);
     }
-    
+
     /**
      * Convenience method that calls internal PublishingMessageCollector
-     * @param topic 
+     *
+     * @param topic
      */
-    public void clearPublish(String topic){
+    public void clearPublish(String topic) {
         publishingCollector.clearPublish(topic);
     }
 
@@ -178,7 +184,11 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         }
         communication.connect(parameters);
 
-        communication.publishActualWill(contract.ONLINE.getBytes());
+        try {
+            communication.publishActualWill(contract.getObjectMapper().writeValueAsBytes(new ConnectionStatus(contract.ONLINE)));
+        } catch (JsonProcessingException ex) {
+            Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
         messageConsumerMap.keySet().forEach((subscription) -> {
             communication.subscribe(subscription, 1);
         });
@@ -260,7 +270,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
                     connectionFuture.cancel(false);
                     connectionFuture = null;
 
-                    communication.publishActualWill(contract.getObjectMapper().writeValueAsBytes(contract.ONLINE));
+                    communication.publishActualWill(contract.getObjectMapper().writeValueAsBytes(new ConnectionStatus(contract.ONLINE)));
                     messageConsumerMap.keySet().forEach((topic) -> {
                         communication.subscribe(topic, 1);
                     });

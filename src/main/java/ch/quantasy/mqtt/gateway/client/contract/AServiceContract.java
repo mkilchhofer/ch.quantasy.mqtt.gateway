@@ -107,7 +107,7 @@ public abstract class AServiceContract {
 
     }
 
-    public abstract void setMessageTopics(Map messageTopicMap);
+    public abstract void setMessageTopics(Map<String, Class<? extends Message>> messageTopicMap);
 
     public Class<? extends Message> getMessageClassFor(String topic) {
         return messageTopicMap.get(topic);

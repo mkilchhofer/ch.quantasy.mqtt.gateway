@@ -51,4 +51,12 @@ import ch.quantasy.mqtt.gateway.client.message.annotations.Choice;
 public class ConnectionStatus extends AStatus{
     @Choice(values = {"online","offline"})
     public String value;
+
+    public ConnectionStatus(String value) {
+        this.value = value;
+    }
+
+    private ConnectionStatus() {
+    }
+    
 }

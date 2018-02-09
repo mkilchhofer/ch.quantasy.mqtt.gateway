@@ -60,7 +60,7 @@ import ch.quantasy.mqtt.communication.mqtt.MQTTMessageManager;
  *
  * @author reto
  */
-public abstract class AServiceContract{
+public abstract class AServiceContract {
 
     private final SortedMap<String, Class<? extends Message>> messageTopicMap;
     private final ServiceContractPublisher serviceContractPublisher;
@@ -101,15 +101,13 @@ public abstract class AServiceContract{
         STATUS_CONNECTION = STATUS + "/connection";
         OFFLINE = "offline";
         ONLINE = "online";
-        this.serviceContractPublisher=new ServiceContractPublisher();
+        this.serviceContractPublisher = new ServiceContractPublisher();
         this.messageTopicMap = new TreeMap();
-        addMessageTopic(STATUS_CONNECTION, ConnectionStatus.class);
+        this.messageTopicMap.put(STATUS_CONNECTION, ConnectionStatus.class);
 
     }
 
-    public void addMessageTopic(String topic, Class<? extends Message> messageClass) {
-        messageTopicMap.put(topic, messageClass);
-    }
+    public abstract void setMessageTopics(Map messageTopicMap);
 
     public Class<? extends Message> getMessageClassFor(String topic) {
         return messageTopicMap.get(topic);
@@ -120,7 +118,8 @@ public abstract class AServiceContract{
     }
 
     public void publishContracts(GatewayClient gatewayClient) {
-        this.serviceContractPublisher.publishContracts(gatewayClient,this);
+        setMessageTopics(this.messageTopicMap);
+        this.serviceContractPublisher.publishContracts(gatewayClient, this);
     }
 
     public abstract ObjectMapper getObjectMapper();
@@ -154,6 +153,7 @@ public abstract class AServiceContract{
 }
 
 class ServiceContractPublisher implements MQTTMessageManager {
+
     private final SortedMap<String, MqttMessage> mqttMessageDescriptionMap;
 
     public ServiceContractPublisher() {

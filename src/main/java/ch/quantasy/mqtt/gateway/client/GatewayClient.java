@@ -61,6 +61,8 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -310,9 +312,9 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
 //        JavaType endType = getMapper().getTypeFactory().constructArrayType(javaType);
 //        return getMapper().readValue(payload, endType);
 //    }
-    public <M extends Message> Set<M> toMessageSet(byte[] payload, Class<M> messageClass) throws Exception {
+    public <M extends Message> SortedSet<M> toMessageSet(byte[] payload, Class<M> messageClass) throws Exception {
         JavaType javaType = contract.getObjectMapper().getTypeFactory().constructArrayType(messageClass);
-        JavaType endType = contract.getObjectMapper().getTypeFactory().constructCollectionType(HashSet.class, messageClass);
+        JavaType endType = contract.getObjectMapper().getTypeFactory().constructCollectionType(TreeSet.class, messageClass);
         return contract.getObjectMapper().readValue(payload, endType);
     }
 

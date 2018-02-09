@@ -43,6 +43,8 @@ package ch.quantasy.mqtt.gateway.client.message;
 
 import ch.quantasy.mqtt.gateway.client.message.annotations.AValidator;
 import ch.quantasy.mqtt.gateway.client.message.annotations.Period;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  *
@@ -61,11 +63,47 @@ public class AMessage extends AValidator implements Message {
     public long getTimeStamp() {
         return timeStamp;
     }
-    
 
     @Override
     public int compareTo(Message o) {
         return (this.getTimeStamp() < o.getTimeStamp() ? -1 : 1);
     }
-}
 
+    /**
+     * Intended only for debugging.
+     *
+     * <P>
+     * Here, a generic implementation uses reflection to print names and values
+     * of all fields <em>declared in this class</em>. Note that superclass
+     * fields are left out of this implementation.
+     *
+     * <p>
+     * The format of the presentation could be standardized by using a
+     * MessageFormat object with a standard pattern.
+     */
+    @Override
+    public String toString() {
+
+        Class<?> clazz = getClass();
+        StringBuilder sb = new StringBuilder(clazz.getSimpleName()).append(" {");
+
+        while (clazz != null && !clazz.equals(Object.class)) {
+            Field[] fields = clazz.getDeclaredFields();
+            for (Field f : fields) {
+                if (!Modifier.isStatic(f.getModifiers())) {
+                    try {
+                        f.setAccessible(true);
+                        sb.append(f.getName()).append(" = ").append(f.get(this)).append(",");
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            clazz = clazz.getSuperclass();
+        }
+
+        sb.deleteCharAt(sb.lastIndexOf(","));
+        return sb.append("}").toString();
+    }
+
+}

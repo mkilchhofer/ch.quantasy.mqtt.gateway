@@ -117,6 +117,9 @@ public abstract class AServiceContract {
         return this.messageTopicMap;
     }
 
+    public void publishContracts() {
+        setMessageTopics(this.messageTopicMap);
+    }
     public void publishContracts(GatewayClient gatewayClient) {
         setMessageTopics(this.messageTopicMap);
         this.serviceContractPublisher.publishContracts(gatewayClient, this);

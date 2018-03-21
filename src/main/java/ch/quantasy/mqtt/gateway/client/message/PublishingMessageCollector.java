@@ -46,8 +46,8 @@ import ch.quantasy.mqtt.gateway.client.contract.AServiceContract;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.util.SortedSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ch.quantasy.mqtt.communication.mqtt.MQTTMessageManager;
 
 /**
@@ -56,6 +56,7 @@ import ch.quantasy.mqtt.communication.mqtt.MQTTMessageManager;
  */
 public class PublishingMessageCollector<S extends AServiceContract> implements MQTTMessageManager {
 
+    private static final Logger LOG = LogManager.getLogger(PublishingMessageCollector.class);
     private final MessageCollector messageCollector;
     private final GatewayClient<S> gatewayClient;
 
@@ -112,7 +113,7 @@ public class PublishingMessageCollector<S extends AServiceContract> implements M
             message.setQos(1);
             message.setRetained(true);
         } catch (JsonProcessingException ex) {
-            Logger.getLogger(PublishingMessageCollector.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.error("", ex);
         }
         return message;
     }

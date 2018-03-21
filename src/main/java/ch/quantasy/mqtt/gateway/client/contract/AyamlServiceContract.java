@@ -75,8 +75,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -84,6 +84,7 @@ import java.util.logging.Logger;
  */
 public abstract class AyamlServiceContract extends AServiceContract {
 
+    private static final Logger LOG = LogManager.getLogger(AyamlServiceContract.class);
     private final ObjectMapper mapper;
 
     public AyamlServiceContract(String rootContext, String baseClass) {
@@ -407,7 +408,7 @@ public abstract class AyamlServiceContract extends AServiceContract {
                 }
 
             } catch (Exception ex) {
-                Logger.getLogger(AValidator.class.getName()).log(Level.SEVERE, null, ex);
+                LOG.error("", ex);
             } finally {
                 field.setAccessible(false);
             }
@@ -443,8 +444,7 @@ public abstract class AyamlServiceContract extends AServiceContract {
                 }
 
             } catch (Exception ex) {
-                Logger.getLogger(AValidator.class
-                        .getName()).log(Level.SEVERE, null, ex);
+                LOG.error("", ex);
             } finally {
                 field.setAccessible(false);
             }

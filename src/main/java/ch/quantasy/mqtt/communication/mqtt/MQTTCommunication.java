@@ -45,8 +45,8 @@ package ch.quantasy.mqtt.communication.mqtt;
 import java.util.Objects;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -63,6 +63,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
  */
 public class MQTTCommunication implements IMqttActionListener {
 
+    private static final Logger LOG = LogManager.getLogger(MQTTCommunication.class);
     private final MQTTCommunicationIntent intent;
     private final MqttConnectOptions connectOptions;
     private IMqttAsyncClient mqttClient;
@@ -239,14 +240,12 @@ public class MQTTCommunication implements IMqttActionListener {
 
     @Override
     public void onSuccess(IMqttToken imt) {
-        Logger.getLogger(MQTTCommunication.class
-                .getName()).log(Level.INFO, null, "success");
+        LOG.info("{}", "success");
     }
 
     @Override
     public void onFailure(IMqttToken imt, Throwable thrwbl) {
-        Logger.getLogger(MQTTCommunication.class
-                .getName()).log(Level.SEVERE, null, thrwbl);
+        LOG.error("", thrwbl);
     }
 
     class Publisher implements Runnable {
@@ -289,7 +288,7 @@ public class MQTTCommunication implements IMqttActionListener {
                         }
                         IMqttDeliveryToken token = publish(publishRequest.topic, message);
                         if (token == null) {
-                            Logger.getLogger(MQTTCommunication.class.getName()).log(Level.SEVERE, null, "Message for " + publishRequest + " lost... Will try again");
+                            LOG.error("Message for {} lost... Will try again", publishRequest);
                         } else {
                             token.waitForCompletion();
                             message = null;
@@ -301,7 +300,7 @@ public class MQTTCommunication implements IMqttActionListener {
                     if (timeToQuit) {
                         return;
                     } else {
-                        Logger.getLogger(MQTTCommunication.class.getName()).log(Level.SEVERE, null, ex);
+                        LOG.error("", ex);
                     }
                 }
             }

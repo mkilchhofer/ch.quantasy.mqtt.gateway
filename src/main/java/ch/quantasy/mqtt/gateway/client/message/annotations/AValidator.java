@@ -42,18 +42,21 @@
 package ch.quantasy.mqtt.gateway.client.message.annotations;
 
 import ch.quantasy.mqtt.gateway.client.message.Validator;
+
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
  * @author reto
  */
 public abstract class AValidator implements Validator {
+
+    private static final Logger LOG = LogManager.getLogger(AValidator.class);
 
     @Override
     public boolean isValid() {
@@ -193,7 +196,7 @@ public abstract class AValidator implements Validator {
 
                 }
             } catch (Exception ex) {
-                Logger.getLogger(AValidator.class.getName()).log(Level.SEVERE, null, ex);
+                LOG.error("", ex);
                 return false;
             } finally {
                 field.setAccessible(false);

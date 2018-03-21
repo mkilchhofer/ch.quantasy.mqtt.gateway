@@ -55,8 +55,8 @@ import com.fasterxml.jackson.databind.JavaType;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.util.Map;
@@ -78,6 +78,7 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
  */
 public class GatewayClient<S extends AServiceContract> implements MqttCallback {
 
+    private static final Logger LOG = LogManager.getLogger(GatewayClient.class);
     private final MQTTParameters parameters;
     private final S contract;
     private final MQTTCommunication communication;
@@ -117,7 +118,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         try {
             parameters.setLastWillMessage(contract.getObjectMapper().writeValueAsBytes(new ConnectionStatus(contract.OFFLINE)));
         } catch (JsonProcessingException ex) {
-            Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.error("", ex);
         }
         parameters.setLastWillQoS(1);
         parameters.setServerURIs(mqttURI);
@@ -170,7 +171,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
             this.disconnect();
             this.communication.quit();
         } catch (MqttException ex) {
-            Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.error("", ex);
         }
     }
 
@@ -187,7 +188,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         try {
             communication.publishActualWill(contract.getObjectMapper().writeValueAsBytes(new ConnectionStatus(contract.ONLINE)));
         } catch (JsonProcessingException ex) {
-            Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.error("", ex);
         }
         messageConsumerMap.keySet().forEach((subscription) -> {
             communication.subscribe(subscription, 1);
@@ -204,7 +205,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
                 communication.unsubscribe(subscription);
             });
         } catch (JsonProcessingException ex) {
-            Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.error("", ex);
         }
         communication.disconnect();
     }
@@ -258,8 +259,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
 
     @Override
     public void connectionLost(Throwable thrwbl) {
-        Logger.getLogger(GatewayClient.class
-                .getName()).log(Level.SEVERE, "Connection to subscriptions lost... will try again in 3 seconds", thrwbl);
+        LOG.error("Connection to subscriptions lost... will try again in 3 seconds", thrwbl);
         if (this.connectionFuture != null) {
             return;
         }
@@ -274,8 +274,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
                     messageConsumerMap.keySet().forEach((topic) -> {
                         communication.subscribe(topic, 1);
                     });
-                    Logger.getLogger(GatewayClient.class
-                            .getName()).log(Level.INFO, "Connection and topic-subscriptions re-established");
+                    LOG.info("Connection and topic-subscriptions re-established");
 
                 }
 
@@ -307,8 +306,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
                 try {
                     consumer.messageReceived(topic, payload);
                 } catch (Exception ex) {
-                    Logger.getLogger(getClass().
-                            getName()).log(Level.INFO, null, ex);
+                    LOG.info("", ex);
                 }
             });
         });

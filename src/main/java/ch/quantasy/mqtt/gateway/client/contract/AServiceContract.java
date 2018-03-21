@@ -51,8 +51,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import ch.quantasy.mqtt.communication.mqtt.MQTTMessageManager;
 
@@ -157,6 +157,7 @@ public abstract class AServiceContract {
 
 class ServiceContractPublisher implements MQTTMessageManager {
 
+    private static final Logger LOG = LogManager.getLogger(ServiceContractPublisher.class);
     private final SortedMap<String, MqttMessage> mqttMessageDescriptionMap;
 
     public ServiceContractPublisher() {
@@ -188,8 +189,7 @@ class ServiceContractPublisher implements MQTTMessageManager {
                 gatewayClient.getCommunication().readyToPublish(this, descriptionTopic);
 
             } catch (JsonProcessingException ex) {
-                Logger.getLogger(GatewayClient.class
-                        .getName()).log(Level.SEVERE, null, ex);
+                LOG.error("", ex);
             }
         }
     }

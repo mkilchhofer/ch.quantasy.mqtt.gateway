@@ -15,7 +15,10 @@
    version="1.1"
    id="svg8918"
    inkscape:version="0.92.2 5c3e80d, 2017-08-06"
-   sodipodi:docname="Micro-service.svg">
+   sodipodi:docname="Micro-service.svg"
+   inkscape:export-filename="/home/reto/NetBeansProjects/ch.quantasy.mqtt.gateway/ch.quantasy.mqtt.gateway/Micro-service.svg.png"
+   inkscape:export-xdpi="477.54999"
+   inkscape:export-ydpi="477.54999">
   <defs
      id="defs8912">
     <marker
@@ -182,10 +185,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
-     inkscape:cx="-488.30598"
+     inkscape:cx="-529.28812"
      inkscape:cy="147.33341"
      inkscape:document-units="mm"
-     inkscape:current-layer="g4777"
+     inkscape:current-layer="g6212"
      showgrid="false"
      inkscape:window-width="3200"
      inkscape:window-height="1677"
@@ -250,47 +253,50 @@
         <rect
            transform="scale(-1,1)"
            ry="17.677698"
-           rx="17.677698"
+           rx="17.6777"
            y="94.068954"
            x="89.016464"
            height="734.2403"
-           width="489.3179"
+           width="619.26318"
            id="rect8341"
-           style="fill:#153c4c;fill-opacity:1;stroke:#5abbf2;stroke-width:7.08661413;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+           style="fill:#153c4c;fill-opacity:1;stroke:#5abbf2;stroke-width:7.08661509;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
         <path
            inkscape:connector-curvature="0"
            id="path4991"
-           d="M -43.281133,324.96968 H -296.42537"
-           style="fill:none;fill-rule:evenodd;stroke:#f2d55a;stroke-width:7.08661413;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#DotM);marker-end:url(#CurveIn)" />
+           d="M -43.281133,324.96968 H -446.98265"
+           style="fill:none;fill-rule:evenodd;stroke:#f2d55a;stroke-width:7.08661413;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#DotM);marker-end:url(#CurveIn)"
+           sodipodi:nodetypes="cc" />
         <path
            inkscape:connector-curvature="0"
            id="path6915"
-           d="M -319.86447,570.96968 H -66.720233"
-           style="fill:none;fill-rule:evenodd;stroke:#f2d55a;stroke-width:7.08661413;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker6917);marker-end:url(#marker6987)" />
+           d="M -470.42175,570.96968 H -66.720233"
+           style="fill:none;fill-rule:evenodd;stroke:#f2d55a;stroke-width:7.08661413;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker6917);marker-end:url(#marker6987)"
+           sodipodi:nodetypes="cc" />
         <path
            style="fill:none;fill-rule:evenodd;stroke:#f2d55a;stroke-width:7.08661413;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker7461);marker-end:url(#marker7543)"
-           d="M -319.86447,450.96968 H -66.720233"
+           d="M -470.42175,450.96968 H -66.720233"
            id="path7459"
-           inkscape:connector-curvature="0" />
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="cc" />
         <rect
            transform="scale(-1,1)"
-           style="fill:#153c4c;fill-opacity:1;stroke:#5abbf2;stroke-width:7.08661413;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           style="fill:#153c4c;fill-opacity:1;stroke:#5abbf2;stroke-width:7.08661509;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
            id="rect8343"
-           width="489.3179"
+           width="619.26318"
            height="115.9655"
            x="89.016464"
-           y="94.068954"
-           rx="17.677698"
+           y="-6.302557"
+           rx="17.6777"
            ry="17.677698" />
         <text
            transform="scale(-1,1)"
            id="text4821-5"
-           y="166.96394"
+           y="66.59243"
            x="196.63538"
            style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
            xml:space="preserve"><tspan
              style="fill:#f3f3f3;fill-opacity:1;stroke-width:1px"
-             y="166.96394"
+             y="66.59243"
              x="196.63538"
              id="tspan4823-8"
              sodipodi:role="line">MQTT-Broker</tspan></text>
@@ -512,7 +518,7 @@
                sodipodi:role="line"
                id="tspan4823"
                x="-923.53015"
-               y="148.67973">Micro-Service: Name / &lt;instance&gt;</tspan></text>
+               y="148.67973">Micro-Service: &lt;Name&gt;/&lt;instance&gt;</tspan></text>
           <g
              transform="matrix(-0.03163248,0,0,0.03163248,-107.82536,243.4232)"
              id="g4825">
@@ -660,67 +666,67 @@
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51373"
                  class="fil4 str4"
-                 points="9.22976,7.06695 9.04726,7.17206 8.9413,6.98956 9.12472,6.88353 " />
+                 points="8.9413,6.98956 9.12472,6.88353 9.22976,7.06695 9.04726,7.17206 " />
               <polygon
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51375"
                  class="fil4 str4"
-                 points="12.3315,5.03126 12.4375,5.21481 12.2573,5.31986 12.1512,5.13736 " />
+                 points="12.2573,5.31986 12.1512,5.13736 12.3315,5.03126 12.4375,5.21481 " />
               <polygon
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51377"
                  class="fil4 str4"
-                 points="11.6505,7.56137 11.7565,7.74374 11.5762,7.8499 11.4702,7.66629 " />
+                 points="11.5762,7.8499 11.4702,7.66629 11.6505,7.56137 11.7565,7.74374 " />
               <polygon
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51379"
                  class="fil4 str4"
-                 points="9.61585,4.45951 9.79941,4.3544 9.90445,4.53487 9.72077,4.63991 " />
+                 points="9.90445,4.53487 9.72077,4.63991 9.61585,4.45951 9.79941,4.3544 " />
               <polygon
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51381"
                  class="fil4 str4"
-                 points="9.90761,7.66629 9.80144,7.8499 9.61907,7.74374 9.72405,7.56137 " />
+                 points="9.61907,7.74374 9.72405,7.56137 9.90761,7.66629 9.80144,7.8499 " />
               <polygon
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51383"
                  class="fil4 str4"
-                 points="11.5762,4.3544 11.7597,4.45951 11.6536,4.643 11.4702,4.53487 " />
+                 points="11.6536,4.643 11.4702,4.53487 11.5762,4.3544 11.7597,4.45951 " />
               <polygon
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51385"
                  class="fil4 str4"
-                 points="12.2509,6.88353 12.4345,6.98956 12.3283,7.17206 12.1449,7.06695 " />
+                 points="12.3283,7.17206 12.1449,7.06695 12.2509,6.88353 12.4345,6.98956 " />
               <polygon
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51387"
                  class="fil4 str4"
-                 points="8.93808,5.21481 9.04411,5.03126 9.22661,5.13736 9.12156,5.31986 " />
+                 points="9.22661,5.13736 9.12156,5.31986 8.93808,5.21481 9.04411,5.03126 " />
               <polygon
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51389"
                  class="fil4 str4"
-                 points="10.7934,7.84669 10.7934,8.05783 10.5822,8.05783 10.5822,7.84669 " />
+                 points="10.5822,8.05783 10.5822,7.84669 10.7934,7.84669 10.7934,8.05783 " />
               <polygon
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51391"
                  class="fil4 str4"
-                 points="12.4345,5.99763 12.6456,5.99763 12.6456,6.20878 12.4345,6.20878 " />
+                 points="12.6456,6.20878 12.4345,6.20878 12.4345,5.99763 12.6456,5.99763 " />
               <polygon
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51393"
                  class="fil4 str4"
-                 points="8.727,6.20878 8.727,5.99763 8.93808,5.99763 8.93808,6.20878 " />
+                 points="8.93808,5.99763 8.93808,6.20878 8.727,6.20878 8.727,5.99763 " />
               <polygon
                  style="fill:#383431;fill-rule:nonzero;stroke:#383431;stroke-width:0.0500596"
                  id="polygon51395"
                  class="fil4 str4"
-                 points="10.7787,4.21959 10.7787,4.43074 10.5676,4.43074 10.5676,4.21959 " />
+                 points="10.5676,4.43074 10.5676,4.21959 10.7787,4.21959 10.7787,4.43074 " />
               <polygon
                  style="fill:#e77817;fill-rule:nonzero"
                  id="polygon51397"
                  class="fil5"
-                 points="10.3267,6.09013 10.5482,6.02706 10.7696,5.964 12.0602,5.59637 12.0184,5.44954 12.6091,5.5603 12.1657,5.96682 12.1233,5.81782 10.8327,6.18539 10.6113,6.24846 10.3898,6.31152 " />
+                 points="10.3898,6.31152 10.3267,6.09013 10.5482,6.02706 10.7696,5.964 12.0602,5.59637 12.0184,5.44954 12.6091,5.5603 12.1657,5.96682 12.1233,5.81782 10.8327,6.18539 10.6113,6.24846 " />
             </g>
             <path
                d="m 188.87537,-1271.7339 0.37135,-0.084 c 0.15339,-0.035 0.30677,0.062 0.34141,0.2156 l 0.25158,1.1141 c 0.0346,0.1534 -0.0623,0.3068 -0.21562,0.3414 l -0.37135,0.084 c -0.15337,0.035 -0.30677,-0.062 -0.34141,-0.2157 l -0.25158,-1.114 c -0.0346,-0.1534 0.0622,-0.3068 0.21562,-0.3414 z"
@@ -754,6 +760,18 @@
             </g>
           </g>
         </g>
+        <text
+           id="text4821-5-36"
+           y="163.73004"
+           x="118.57232"
+           style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           xml:space="preserve"
+           transform="scale(-1,1)"><tspan
+             style="fill:#f3f3f3;fill-opacity:1;stroke-width:1px"
+             y="163.73004"
+             x="118.57232"
+             id="tspan4823-8-7"
+             sodipodi:role="line">&lt;Name&gt;/U/&lt;instance&gt;/</tspan></text>
       </g>
     </g>
   </g>

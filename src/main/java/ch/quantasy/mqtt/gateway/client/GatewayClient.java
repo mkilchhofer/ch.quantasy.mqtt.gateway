@@ -51,9 +51,11 @@ import ch.quantasy.mqtt.communication.mqtt.Testament;
 import ch.quantasy.mqtt.gateway.client.message.Message;
 import ch.quantasy.mqtt.gateway.client.message.MessageCollector;
 import ch.quantasy.mqtt.gateway.client.message.PublishingMessageCollector;
+import com.fasterxml.jackson.core.JsonPointer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -321,17 +323,8 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         return TIMER_SERVICE;
     }
 
-    //This works if the other one is too slow! Test its speed.
-    //GatewayClientEvent<PhysicalMemory>[] events = getMapper().readValue(payload, new TypeReference<GatewayClientEvent<PhysicalMemory>[]>() { });
-//    public <T> T toMessageSet(byte[] payload, Class<?> eventValue) throws Exception {
-//        JavaType javaType = getMapper().getTypeFactory().constructParametricType(GCEvent.class, eventValue);
-//        JavaType endType = getMapper().getTypeFactory().constructArrayType(javaType);
-//        return getMapper().readValue(payload, endType);
-//    }
     public <M extends Message> SortedSet<M> toMessageSet(byte[] payload, Class<M> messageClass) throws Exception {
-        JavaType javaType = contract.getObjectMapper().getTypeFactory().constructArrayType(messageClass);
         JavaType endType = contract.getObjectMapper().getTypeFactory().constructCollectionType(TreeSet.class, messageClass);
         return contract.getObjectMapper().readValue(payload, endType);
     }
-
 }

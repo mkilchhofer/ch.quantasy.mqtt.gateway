@@ -63,7 +63,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
  */
 public class MQTTCommunication implements IMqttActionListener {
 
-    private MQTTParameters connectionParameters;
+    private final MQTTCommunicationIntent intent;
     private final MqttConnectOptions connectOptions;
     private IMqttAsyncClient mqttClient;
     private Thread publisherThread;
@@ -73,26 +73,76 @@ public class MQTTCommunication implements IMqttActionListener {
     public MQTTCommunication() {
         this.connectOptions = new MqttConnectOptions();
         this.publisher = new Publisher();
+        this.intent = new MQTTCommunicationIntent();
     }
 
-    public synchronized void connect(MQTTParameters connectionParameters) throws MqttException {
-        if (connectionParameters == null || !connectionParameters.isValid()) {
+    public synchronized void setIntent(MQTTCommunicationIntent intent) {
+        if (!intent.isValid()) {
+            return;
+        }
+        //If communication is established (connected) nothing can be changed. It only accepts changes when not connected
+        if (this.intent.connect != null && this.intent.connect) {
+            return;
+        }
+
+        if (intent.isCleanSession != null) {
+            this.connectOptions.setCleanSession(intent.isCleanSession);
+            this.intent.isCleanSession = this.connectOptions.isCleanSession();
+        }
+        if (intent.clientID != null) {
+            this.intent.clientID = intent.clientID;
+        }
+        if (intent.mqttCallback != null) {
+            this.intent.mqttCallback = intent.mqttCallback;
+        }
+        if (intent.serverURIs != null) {
+            this.connectOptions.setServerURIs(intent.getServerURIsAsString());
+            this.intent.setServerURIs(this.connectOptions.getServerURIs());
+        }
+        if (intent.testament != null) {
+            this.intent.testament = new Testament(intent.testament);
+            connectOptions.setWill(intent.testament.willTopic, intent.testament.lastWillMessage, intent.testament.lastWillQoS, intent.testament.isLastWillRetained);
+
+        }
+        if (intent.authentication != null) {
+            this.intent.authentication = new Authentication(intent.authentication);
+        }
+        if (intent.automaticReconnect != null) {
+            this.connectOptions.setAutomaticReconnect(intent.automaticReconnect);
+            this.intent.automaticReconnect = this.connectOptions.isAutomaticReconnect();
+        }
+
+        if (intent.connect != null && !intent.connect.equals(this.intent.connect)) {
+            this.intent.connect = intent.connect;
+            if (this.intent.connect && this.intent.isConnectable()) {
+                try {
+                    connect();
+                } catch (MqttException ex) {
+                    Logger.getLogger(MQTTCommunication.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            if (!this.intent.connect) {
+                try {
+                    disconnect();
+                } catch (MqttException ex) {
+                    Logger.getLogger(MQTTCommunication.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+
+        }
+    }
+
+    private synchronized void connect() throws MqttException {
+        if (!intent.isConnectable()) {
             return;
         }
         if (mqttClient != null && mqttClient.isConnected()) {
             return;
         }
-        connectionParameters.setInUse(true);
-        this.connectionParameters = connectionParameters;
         if (mqttClient == null) {
-            mqttClient = new MqttAsyncClient(getMQTTParameters().getServerURIsAsString()[0], connectionParameters.getClientID(), new MemoryPersistence());
+            mqttClient = new MqttAsyncClient(intent.serverURIs[0].toString(), intent.clientID, new MemoryPersistence());
         }
-        connectOptions.setServerURIs(connectionParameters.getServerURIsAsString());
-        mqttClient.setCallback(connectionParameters.getMqttCallback());
-        connectOptions.setCleanSession(connectionParameters.isCleanSession());
-        connectOptions.setWill(connectionParameters.getWillTopic(), connectionParameters.getLastWillMessage(), connectionParameters.getLastWillQoS(), connectionParameters.isLastWillRetained());
-        //connectOptions.setMaxInflight(1024);
-        connectOptions.setAutomaticReconnect(true);
+        mqttClient.setCallback(intent.mqttCallback);
 
         mqttClient.setManualAcks(false);
         mqttClient.connect(connectOptions).waitForCompletion();
@@ -106,9 +156,9 @@ public class MQTTCommunication implements IMqttActionListener {
 
     public synchronized IMqttDeliveryToken publishActualWill(byte[] actualWill) {
         MqttMessage message = new MqttMessage(actualWill);
-        message.setQos(connectionParameters.getLastWillQoS());
-        message.setRetained(connectionParameters.isLastWillRetained());
-        return this.publish(connectionParameters.getWillTopic(), message);
+        message.setQos(intent.testament.lastWillQoS);
+        message.setRetained(intent.testament.isLastWillRetained);
+        return this.publish(intent.testament.willTopic, message);
     }
 
     public void readyToPublish(MQTTMessageManager publisherCallback, String topic) {
@@ -158,26 +208,22 @@ public class MQTTCommunication implements IMqttActionListener {
         }
     }
 
-    public synchronized void disconnect() throws MqttException {
+    private synchronized void disconnect() throws MqttException {
         if (mqttClient == null) {
             return;
         }
         mqttClient.disconnect();
-        connectionParameters.setInUse(false);
     }
 
-    public synchronized void disconnectForcibly() throws MqttException {
-        if (mqttClient == null) {
-            return;
-        }
-        mqttClient.disconnectForcibly();
-        connectionParameters.setInUse(false);
-    }
+//    public synchronized void disconnectForcibly() throws MqttException {
+//        if (mqttClient == null) {
+//            return;
+//        }
+//        mqttClient.disconnectForcibly();
+//        connectionParameters.setInUse(false);
+//    }
 
-    public MQTTParameters getMQTTParameters() {
-        return connectionParameters;
-    }
-
+   
     public synchronized boolean isConnected() {
         if (mqttClient == null) {
             return false;
@@ -225,8 +271,8 @@ public class MQTTCommunication implements IMqttActionListener {
                     publishRequest = publishingQueue.take();
 
                     MqttMessage message = publishRequest.getMessage();
-                    
-                    while (message != null){
+
+                    while (message != null) {
                         synchronized (MQTTCommunication.this) {
                             while (!MQTTCommunication.this.isConnected()) {
                                 if (timeToQuit) {

@@ -45,7 +45,9 @@ package ch.quantasy.mqtt.gateway.client;
 import ch.quantasy.mqtt.gateway.client.message.MessageReceiver;
 import ch.quantasy.mqtt.gateway.client.contract.AServiceContract;
 import ch.quantasy.mqtt.communication.mqtt.MQTTCommunication;
+import ch.quantasy.mqtt.communication.mqtt.MQTTCommunicationIntent;
 import ch.quantasy.mqtt.communication.mqtt.MQTTParameters;
+import ch.quantasy.mqtt.communication.mqtt.Testament;
 import ch.quantasy.mqtt.gateway.client.message.Message;
 import ch.quantasy.mqtt.gateway.client.message.MessageCollector;
 import ch.quantasy.mqtt.gateway.client.message.PublishingMessageCollector;
@@ -78,7 +80,6 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
  */
 public class GatewayClient<S extends AServiceContract> implements MqttCallback {
 
-    private final MQTTParameters parameters;
     private final S contract;
     private final MQTTCommunication communication;
     private final Map<String, Set<MessageReceiver>> messageConsumerMap;
@@ -87,6 +88,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
 
     private final MessageCollector collector;
     private final PublishingMessageCollector<S> publishingCollector;
+    private final MQTTCommunicationIntent intent;
 
     /**
      * One executorService pool for all implemented Services within a JVM
@@ -96,7 +98,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
 
     static {
         EXECUTOR_SERVICE = Executors.newCachedThreadPool();
-        TIMER_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), (Runnable r) -> {
+        TIMER_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2, (Runnable r) -> {
             Thread t = Executors.defaultThreadFactory().newThread(r);
             t.setDaemon(true);
             return t;
@@ -110,19 +112,22 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         messageConsumerMap = new HashMap<>();
         contractDescriptionMap = new HashMap<>();
         communication = new MQTTCommunication();
-        parameters = new MQTTParameters();
-        parameters.setClientID(clientID);
-        parameters.setIsCleanSession(false);
-        parameters.setIsLastWillRetained(true);
+        Testament testament = new Testament();
+        testament.isLastWillRetained = true;
         try {
-            parameters.setLastWillMessage(contract.getObjectMapper().writeValueAsBytes(new ConnectionStatus(contract.OFFLINE)));
+            testament.lastWillMessage = contract.getObjectMapper().writeValueAsBytes(new ConnectionStatus(contract.OFFLINE));
         } catch (JsonProcessingException ex) {
             Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
         }
-        parameters.setLastWillQoS(1);
-        parameters.setServerURIs(mqttURI);
-        parameters.setWillTopic(contract.STATUS_CONNECTION);
-        parameters.setMqttCallback(this);
+        testament.lastWillQoS = 1;
+        testament.willTopic = contract.STATUS_CONNECTION;
+        intent = new MQTTCommunicationIntent();
+        intent.clientID = clientID;
+        intent.automaticReconnect = true;
+        intent.isCleanSession = false;
+        intent.serverURIs = new URI[]{mqttURI};
+        intent.testament = testament;
+        intent.mqttCallback = this;
         contract.publishContracts(this);
     }
 
@@ -153,12 +158,8 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         return collector;
     }
 
-    /**
-     *
-     * @return
-     */
-    public MQTTParameters getParameters() {
-        return parameters;
+    public MQTTCommunicationIntent getIntent() {
+        return intent;
     }
 
     public MQTTCommunication getCommunication() {
@@ -178,12 +179,8 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         if (communication.isConnected()) {
             return;
         }
-        if (getSubscriptionTopics().isEmpty()) {
-            MQTTParameters params = new MQTTParameters(parameters);
-            communication.connect(params);
-        }
-        communication.connect(parameters);
-
+        intent.connect = true;
+        communication.setIntent(intent);
         try {
             communication.publishActualWill(contract.getObjectMapper().writeValueAsBytes(new ConnectionStatus(contract.ONLINE)));
         } catch (JsonProcessingException ex) {
@@ -206,7 +203,8 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         } catch (JsonProcessingException ex) {
             Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
         }
-        communication.disconnect();
+        intent.connect = false;
+        communication.setIntent(intent);
     }
 
     /**
@@ -266,7 +264,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         connectionFuture = TIMER_SERVICE.scheduleAtFixedRate(() -> {
             try {
                 if (connectionFuture != null) {
-                    communication.connect(parameters);
+                    communication.setIntent(intent);
                     connectionFuture.cancel(false);
                     connectionFuture = null;
 
@@ -313,6 +311,14 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
             });
         });
 
+    }
+
+    public static ExecutorService getEXECUTOR_SERVICE() {
+        return EXECUTOR_SERVICE;
+    }
+
+    public static ScheduledExecutorService getTIMER_SERVICE() {
+        return TIMER_SERVICE;
     }
 
     //This works if the other one is too slow! Test its speed.

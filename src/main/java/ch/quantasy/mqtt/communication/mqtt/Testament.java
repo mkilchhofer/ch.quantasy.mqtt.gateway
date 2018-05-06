@@ -42,10 +42,8 @@
 package ch.quantasy.mqtt.communication.mqtt;
 
 import ch.quantasy.mqtt.gateway.client.message.AMessage;
-import ch.quantasy.mqtt.gateway.client.message.AnIntent;
 import ch.quantasy.mqtt.gateway.client.message.annotations.Choice;
 import ch.quantasy.mqtt.gateway.client.message.annotations.NonNull;
-import ch.quantasy.mqtt.gateway.client.message.annotations.Range;
 
 /**
  *

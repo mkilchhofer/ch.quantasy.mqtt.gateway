@@ -421,10 +421,10 @@ public abstract class AyamlServiceContract extends AServiceContract {
         }
 
         String delim = "";
-        if (descriptionOptional.length() > 0 && descriptionRequired.length() > 0) {
+        if (descriptionOptional.length() > 0 && descriptionRequired.length() > 0 && !descriptionRequired.endsWith("\n")) {
             delim = "\n";
         }
-        return descriptionOptional + delim + descriptionRequired;
+        return  descriptionRequired + delim + descriptionOptional;
     }
 
     public static String enumDescription(Class enumType, String fieldName, String indentation) {

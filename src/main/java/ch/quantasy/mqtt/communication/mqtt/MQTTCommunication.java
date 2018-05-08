@@ -132,6 +132,12 @@ public class MQTTCommunication implements IMqttActionListener {
         }
     }
 
+    public MQTTCommunicationIntent getIntent() {
+        return new MQTTCommunicationIntent(intent);
+    }
+    
+    
+
     private synchronized void connect() throws MqttException {
         if (!intent.isConnectable()) {
             return;

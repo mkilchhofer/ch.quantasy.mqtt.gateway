@@ -46,16 +46,14 @@ import ch.quantasy.mqtt.gateway.client.message.MessageReceiver;
 import ch.quantasy.mqtt.gateway.client.contract.AServiceContract;
 import ch.quantasy.mqtt.communication.mqtt.MQTTCommunication;
 import ch.quantasy.mqtt.communication.mqtt.MQTTCommunicationIntent;
-import ch.quantasy.mqtt.communication.mqtt.MQTTParameters;
+//import ch.quantasy.mqtt.communication.mqtt.MQTTCommunicationIntent;
 import ch.quantasy.mqtt.communication.mqtt.Testament;
 import ch.quantasy.mqtt.gateway.client.message.Message;
 import ch.quantasy.mqtt.gateway.client.message.MessageCollector;
 import ch.quantasy.mqtt.gateway.client.message.PublishingMessageCollector;
-import com.fasterxml.jackson.core.JsonPointer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -90,7 +88,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
 
     private final MessageCollector collector;
     private final PublishingMessageCollector<S> publishingCollector;
-    private final MQTTCommunicationIntent intent;
+    //private final MQTTCommunicationIntent intent;
 
     /**
      * One executorService pool for all implemented Services within a JVM
@@ -123,13 +121,14 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         }
         testament.lastWillQoS = 1;
         testament.willTopic = contract.STATUS_CONNECTION;
-        intent = new MQTTCommunicationIntent();
+        MQTTCommunicationIntent intent = new MQTTCommunicationIntent();
         intent.clientID = clientID;
         intent.automaticReconnect = true;
         intent.isCleanSession = false;
         intent.serverURIs = new URI[]{mqttURI};
         intent.testament = testament;
         intent.mqttCallback = this;
+        communication.setIntent(intent);
         contract.publishContracts(this);
     }
 
@@ -161,7 +160,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
     }
 
     public MQTTCommunicationIntent getIntent() {
-        return intent;
+        return communication.getIntent();
     }
 
     public MQTTCommunication getCommunication() {
@@ -181,6 +180,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         if (communication.isConnected()) {
             return;
         }
+        MQTTCommunicationIntent intent=communication.getIntent();
         intent.connect = true;
         communication.setIntent(intent);
         try {
@@ -205,6 +205,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         } catch (JsonProcessingException ex) {
             Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
         }
+        MQTTCommunicationIntent intent=communication.getIntent();
         intent.connect = false;
         communication.setIntent(intent);
     }
@@ -266,6 +267,8 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         connectionFuture = TIMER_SERVICE.scheduleAtFixedRate(() -> {
             try {
                 if (connectionFuture != null) {
+                    MQTTCommunicationIntent intent=communication.getIntent();
+                    intent.connect=true;
                     communication.setIntent(intent);
                     connectionFuture.cancel(false);
                     connectionFuture = null;

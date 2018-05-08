@@ -51,7 +51,7 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
  *
  * @author reto
  */
-public class MQTTCommunicationIntent extends AMessage {
+public class MQTTCommunicationStatus extends AMessage {
 
     public URI[] serverURIs;
     public String clientID;
@@ -68,30 +68,17 @@ public class MQTTCommunicationIntent extends AMessage {
     @Range(from = 0, to = Integer.MAX_VALUE)
     public Integer connectionTimeout;
 
-    public MQTTCommunicationIntent(String clientID, Boolean isCleanSession, Boolean automaticReconnect, Authentication authentication, Testament testament, MqttCallback mqttCallback, Boolean connect, Integer keepAliveInterval, Integer connectionTimeout,URI... serverURIs) {
-        this.serverURIs = serverURIs.clone();
+    public MQTTCommunicationStatus(String clientID, Boolean isCleanSession, Boolean automaticReconnect, Authentication authentication, Testament testament, MqttCallback mqttCallback, Boolean connect, Integer keepAliveInterval, Integer connectionTimeout,URI... serverURIs) {
+        this.serverURIs = serverURIs;
         this.clientID = clientID;
         this.isCleanSession = isCleanSession;
         this.automaticReconnect = automaticReconnect;
-        this.authentication = new Authentication(authentication);
-        this.testament = new Testament(testament);
+        this.authentication = authentication;
+        this.testament = testament;
         this.mqttCallback = mqttCallback;
         this.connect = connect;
         this.keepAliveInterval = keepAliveInterval;
         this.connectionTimeout = connectionTimeout;
-    }
-    
-    public MQTTCommunicationIntent(MQTTCommunicationIntent intent){
-        this.serverURIs=intent.serverURIs.clone();
-        this.clientID=intent.clientID;
-        this.isCleanSession=intent.isCleanSession;
-        this.automaticReconnect=intent.automaticReconnect;
-        this.authentication=new Authentication(intent.authentication);
-        this.testament=new Testament(intent.testament);
-        this.mqttCallback=intent.mqttCallback;
-        this.connect=intent.connect;
-        this.keepAliveInterval=intent.keepAliveInterval;
-        this.connectionTimeout=intent.connectionTimeout;
     }
 
     
@@ -129,6 +116,6 @@ public class MQTTCommunicationIntent extends AMessage {
         return true;
     }
 
-    public MQTTCommunicationIntent() {
+    public MQTTCommunicationStatus() {
     }
 }

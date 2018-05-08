@@ -42,6 +42,7 @@
 package ch.quantasy.mqtt.gateway.client.message;
 
 import ch.quantasy.mqtt.gateway.client.message.annotations.AValidator;
+import ch.quantasy.mqtt.gateway.client.message.annotations.Default;
 import ch.quantasy.mqtt.gateway.client.message.annotations.Period;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -53,6 +54,7 @@ import java.lang.reflect.Modifier;
 public class AMessage extends AValidator implements Message {
 
     @Period
+    @Default("Current time in nano seconds")
     private long timeStamp;
 
     public AMessage() {

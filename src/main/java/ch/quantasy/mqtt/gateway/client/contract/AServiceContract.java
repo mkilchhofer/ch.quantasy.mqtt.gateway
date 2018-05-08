@@ -185,6 +185,7 @@ class ServiceContractPublisher implements MQTTMessageManager {
                 synchronized (mqttMessageDescriptionMap) {
                     mqttMessageDescriptionMap.put(descriptionTopic, message);
                 }
+                //Direct call, so no Array of Messages will be presented at the broker
                 gatewayClient.getCommunication().readyToPublish(this, descriptionTopic);
 
             } catch (JsonProcessingException ex) {

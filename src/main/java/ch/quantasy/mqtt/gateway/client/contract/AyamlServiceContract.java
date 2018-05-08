@@ -47,6 +47,7 @@ import ch.quantasy.mqtt.gateway.client.message.Validator;
 import ch.quantasy.mqtt.gateway.client.message.annotations.AValidator;
 import ch.quantasy.mqtt.gateway.client.message.annotations.ArraySize;
 import ch.quantasy.mqtt.gateway.client.message.annotations.Choice;
+import ch.quantasy.mqtt.gateway.client.message.annotations.Default;
 import ch.quantasy.mqtt.gateway.client.message.annotations.Fraction;
 import ch.quantasy.mqtt.gateway.client.message.annotations.MultiArraySize;
 import ch.quantasy.mqtt.gateway.client.message.annotations.Nullable;
@@ -135,9 +136,11 @@ public abstract class AyamlServiceContract extends AServiceContract {
     }
 
     public static String getDataFormatDescription(Class o, String indentation) {
-        String description = "";
+        String descriptionOptional = indentation + "optional: # this tag is not part of the data structure\n";
+        String descriptionRequired = indentation + "required: # this tag is not part of the data structure\n";
+        indentation += "  ";
         if (o == null) {
-            return description;
+            return "";
         }
         List<Field> fields = new ArrayList();
         fields.addAll(Arrays.asList(o.getDeclaredFields()));
@@ -152,149 +155,233 @@ public abstract class AyamlServiceContract extends AServiceContract {
                 return o1.getName().compareToIgnoreCase(o2.getName());
             }
         });
-
+        boolean required = false;
         for (Field field : fields) {
+            String endOfLine = "\n";
             try {
                 field.setAccessible(true);
+                if (field.isAnnotationPresent(Default.class)) {
+                    endOfLine = " # default: " + field.getAnnotation(Default.class).value() + "\n";
+                }
                 if (field.isAnnotationPresent(Nullable.class)) {
-                    description += field.getName() + ": ";
-
-                    description += "null\n";
+                    required = false;
+                } else {
+                    required = true;
                 }
                 if (field.isAnnotationPresent(ArraySize.class)) {
-                    description += indentation;
-                    description += field.getName() + ": ";
-                    description += "Array <";
+                    String desc = indentation;
+                    desc += field.getName() + ": ";
+                    desc += "Array <";
                     ArraySize annotation = field.getAnnotation(ArraySize.class);
-                    description += "min: " + annotation.min() + " ";
-                    description += "max: " + annotation.max();
-                    description += ">\n";
+                    desc += "min: " + annotation.min() + " ";
+                    desc += "max: " + annotation.max();
+                    desc += ">";
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
                 }
                 if (field.isAnnotationPresent(MultiArraySize.class)) {
-                    description += indentation;
-                    description += field.getName() + ": ";
-                    description += "Arrays: <[";
+                    String desc = indentation;
+                    desc += field.getName() + ": ";
+                    desc += "Arrays: <[";
                     MultiArraySize annotation = field.getAnnotation(MultiArraySize.class);
                     String separator = "";
                     for (ArraySize arraySize : annotation.values()) {
-                        description += separator;
-                        description += "min: " + arraySize.min() + " ";
-                        description += "max: " + arraySize.max();
+                        desc += separator;
+                        desc += "min: " + arraySize.min() + " ";
+                        desc += "max: " + arraySize.max();
                         separator = ",";
                     }
-                    description += "]>\n";
+                    desc += "]>";
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
 
                 }
                 if (field.isAnnotationPresent(StringSize.class)) {
-                    description += indentation;
-                    description += field.getName() + ": ";
-                    description += "String <";
+                    String desc = indentation;
+                    desc += field.getName() + ": ";
+                    desc += "String <";
                     StringSize annotation = field.getAnnotation(StringSize.class);
-                    description += "min: " + annotation.min() + " ";
-                    description += "max: " + annotation.max();
-                    description += ">\n";
+                    desc += "min: " + annotation.min() + " ";
+                    desc += "max: " + annotation.max();
+                    desc += ">";
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
                 }
                 if (field.isAnnotationPresent(Period.class)) {
-                    description += indentation;
+                    String desc = indentation;
 
-                    description += field.getName() + ": ";
-                    description += "Number <";
+                    desc += field.getName() + ": ";
+                    desc += "Number <";
                     Period annotation = field.getAnnotation(Period.class);
-                    description += "from: " + annotation.from() + " ";
-                    description += "to: " + annotation.to();
-                    description += ">\n";
+                    desc += "from: " + annotation.from() + " ";
+                    desc += "to: " + annotation.to();
+                    desc += ">";
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
                 }
                 if (field.isAnnotationPresent(Ranges.class)) {
-                    description += indentation;
+                    String desc = indentation;
 
-                    description += field.getName() + ": ";
+                    desc += field.getName() + ": ";
 
-                    description += "Number <[";
+                    desc += "Number <[";
                     Ranges annotation = field.getAnnotation(Ranges.class);
                     String separator = "";
                     for (Range range : annotation.values()) {
-                        description += separator;
-                        description += "from: " + range.from() + " ";
-                        description += "to: " + range.to();
+                        desc += separator;
+                        desc += "from: " + range.from() + " ";
+                        desc += "to: " + range.to();
                         separator = ",";
                     }
-                    description += "]>\n";
+                    desc += "]>";
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
                 }
                 if (field.isAnnotationPresent(Range.class)) {
-                    description += indentation;
+                    String desc = indentation;
 
-                    description += field.getName() + ": ";
+                    desc += field.getName() + ": ";
 
-                    description += "Number <";
+                    desc += "Number <";
                     Range annotation = field.getAnnotation(Range.class);
-                    description += "from: " + annotation.from() + " ";
-                    description += "to: " + annotation.to();
-                    description += ">\n";
-
+                    desc += "from: " + annotation.from() + " ";
+                    desc += "to: " + annotation.to();
+                    desc += ">";
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
                 }
                 if (field.isAnnotationPresent(Fraction.class)) {
-                    description += indentation;
+                    String desc = indentation;
 
-                    description += field.getName() + ": ";
+                    desc += field.getName() + ": ";
 
-                    description += "Fraction <";
+                    desc += "Fraction <";
                     Fraction annotation = field.getAnnotation(Fraction.class);
-                    description += "from: " + annotation.from() + " ";
-                    description += "to: " + annotation.to();
-                    description += ">\n";
+                    desc += "from: " + annotation.from() + " ";
+                    desc += "to: " + annotation.to();
+                    desc += ">";
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
 
                 }
                 if (field.isAnnotationPresent(Choice.class)) {
-                    description += indentation;
+                    String desc = indentation;
 
-                    description += field.getName() + ": ";
+                    desc += field.getName() + ": ";
 
-                    description += "String <";
+                    desc += "String <";
                     Choice annotation = field.getAnnotation(Choice.class);
-                    description += Arrays.toString(annotation.values());
-                    description += ">\n";
-
+                    desc += Arrays.toString(annotation.values());
+                    desc += ">";
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
                 }
 
                 if (field.isAnnotationPresent(SetSize.class)) {
-                    description += indentation;
+                    String desc = indentation;
 
-                    description += field.getName() + ": ";
+                    desc += field.getName() + ": ";
 
-                    description += "Set <";
+                    desc += "Set <";
                     SetSize annotation = field.getAnnotation(SetSize.class);
 
-                    description += "min: " + annotation.min() + " ";
-                    description += "max: " + annotation.max();
-                    description += ">\n";
-
+                    desc += "min: " + annotation.min() + " ";
+                    desc += "max: " + annotation.max();
+                    desc += ">";
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
                 }
                 if (field.isAnnotationPresent(StringForm.class)) {
-                    description += indentation;
-                    description += field.getName() + ": ";
-                    description += "String <";
+                    String desc = indentation;
+                    desc += field.getName() + ": ";
+                    desc += "String <";
                     StringForm annotation = field.getAnnotation(StringForm.class);
-                    description += "regEx: " + annotation.regEx();
-                    description += ">\n";
+                    desc += "regEx: " + annotation.regEx();
+                    desc += ">";
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
                 }
 
                 Class c = field.getType();
                 if (Boolean.class.isAssignableFrom(c) || boolean.class.isAssignableFrom(c)) {
-                    description += indentation;
-                    description += field.getName() + ": ";
-                    description += "Boolean <true,false> \n";
+                    String desc = indentation;
+                    desc += field.getName() + ": ";
+                    desc += "Boolean <true,false>";
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
                 } else if (Enum.class.isAssignableFrom(c)) {
-                    description += enumDescription(field.getType(), field.getName(), indentation);
-                    description += "\n";
+                    String desc = enumDescription(field.getType(), field.getName(), indentation);
+                    desc += endOfLine;
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
                 } else if (c != o && Validator.class.isAssignableFrom(c)) {
-                    description += indentation;
-                    description += field.getName() + ": \n";
-                    description += getDataFormatDescription(c, indentation + "  ");
+                    String desc = indentation;
+                    desc += field.getName() + ":";
+                    desc+=endOfLine;
+                    desc += getDataFormatDescription(c, indentation + "  ");
+                    if (required) {
+                        descriptionRequired += desc;
+                    } else {
+                        descriptionOptional += desc;
+                    }
                 } else if (c.isArray()) {
                     c = c.getComponentType();
                     if (Validator.class.isAssignableFrom(c)) {
-                        description += indentation + "  " + c.getSimpleName() + ": \n";
-                        description += getDataFormatDescription(c, indentation + "    ");
+                        String desc = indentation + "  " + c.getSimpleName() + ":";
+                        desc +=endOfLine;
+                        desc += getDataFormatDescription(c, indentation + "    ");
+                        if (required) {
+                            descriptionRequired += desc;
+                        } else {
+                            descriptionOptional += desc;
+                        }
 
                     }
                 } else if (Collection.class.isAssignableFrom(c)) {
@@ -306,8 +393,14 @@ public abstract class AyamlServiceContract extends AServiceContract {
                         Type[] arr = pType.getActualTypeArguments();
                         for (Type tp : arr) {
                             Class<?> clzz = (Class<?>) tp;
-                            description += indentation + field.getName() + ": \n";
-                            description += getDataFormatDescription(clzz, indentation + " ");
+                            String desc = indentation + field.getName() + ":";
+                            desc += endOfLine;
+                            desc += getDataFormatDescription(clzz, indentation + " ");
+                            if (required) {
+                                descriptionRequired += desc;
+                            } else {
+                                descriptionOptional += desc;
+                            }
                         }
                     }
 
@@ -319,9 +412,19 @@ public abstract class AyamlServiceContract extends AServiceContract {
                 field.setAccessible(false);
             }
         }
+        if (descriptionOptional.trim().length() == "optional: # this tag is not part of the data structure".length()) {
+            descriptionOptional = "";
+        }
 
-        return description;
+        if (descriptionRequired.trim().length() == "required: # this tag is not part of the data structure".length()) {
+            descriptionRequired = "";
+        }
 
+        String delim = "";
+        if (descriptionOptional.length() > 0 && descriptionRequired.length() > 0) {
+            delim = "\n";
+        }
+        return descriptionOptional + delim + descriptionRequired;
     }
 
     public static String enumDescription(Class enumType, String fieldName, String indentation) {

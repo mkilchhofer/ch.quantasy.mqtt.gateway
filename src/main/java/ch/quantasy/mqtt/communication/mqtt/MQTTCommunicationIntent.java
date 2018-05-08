@@ -68,7 +68,7 @@ public class MQTTCommunicationIntent extends AMessage {
     @Range(from = 0, to = Integer.MAX_VALUE)
     public Integer connectionTimeout;
 
-    public MQTTCommunicationIntent(String clientID, Boolean isCleanSession, Boolean automaticReconnect, Authentication authentication, Testament testament, MqttCallback mqttCallback, Boolean connect, Integer keepAliveInterval, Integer connectionTimeout,URI... serverURIs) {
+    public MQTTCommunicationIntent(String clientID, Boolean isCleanSession, Boolean automaticReconnect, Authentication authentication, Testament testament, MqttCallback mqttCallback, Boolean connect, Integer keepAliveInterval, Integer connectionTimeout, URI... serverURIs) {
         this.serverURIs = serverURIs.clone();
         this.clientID = clientID;
         this.isCleanSession = isCleanSession;
@@ -80,21 +80,24 @@ public class MQTTCommunicationIntent extends AMessage {
         this.keepAliveInterval = keepAliveInterval;
         this.connectionTimeout = connectionTimeout;
     }
-    
-    public MQTTCommunicationIntent(MQTTCommunicationIntent intent){
-        this.serverURIs=intent.serverURIs.clone();
-        this.clientID=intent.clientID;
-        this.isCleanSession=intent.isCleanSession;
-        this.automaticReconnect=intent.automaticReconnect;
-        this.authentication=new Authentication(intent.authentication);
-        this.testament=new Testament(intent.testament);
-        this.mqttCallback=intent.mqttCallback;
-        this.connect=intent.connect;
-        this.keepAliveInterval=intent.keepAliveInterval;
-        this.connectionTimeout=intent.connectionTimeout;
+
+    public MQTTCommunicationIntent(MQTTCommunicationIntent intent) {
+        this.serverURIs = intent.serverURIs.clone();
+        this.clientID = intent.clientID;
+        this.isCleanSession = intent.isCleanSession;
+        this.automaticReconnect = intent.automaticReconnect;
+        if (intent.authentication != null) {
+            this.authentication = new Authentication(intent.authentication);
+        }
+        if (intent.testament != null) {
+            this.testament = new Testament(intent.testament);
+        }
+        this.mqttCallback = intent.mqttCallback;
+        this.connect = intent.connect;
+        this.keepAliveInterval = intent.keepAliveInterval;
+        this.connectionTimeout = intent.connectionTimeout;
     }
 
-    
     public String[] getServerURIsAsString() {
         String[] urisAsStrings = new String[serverURIs.length];
         for (int i = 0; i < serverURIs.length; i++) {

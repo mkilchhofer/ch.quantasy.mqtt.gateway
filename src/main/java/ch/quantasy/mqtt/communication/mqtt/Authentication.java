@@ -49,7 +49,8 @@ import ch.quantasy.mqtt.gateway.client.message.annotations.Nullable;
  *
  * @author reto
  */
-public class Authentication extends AMessage{
+public class Authentication extends AMessage {
+
     @NonNull
     public String username;
     @NonNull
@@ -58,14 +59,17 @@ public class Authentication extends AMessage{
     public Authentication() {
     }
 
-    public Authentication(Authentication authentication){
-        this.username=authentication.username;
-        this.password=authentication.password;
+    public Authentication(Authentication authentication) {
+        if (authentication == null) {
+            return;
+        }
+        this.username = authentication.username;
+        this.password = authentication.password;
     }
+
     public Authentication(String username, String password) {
         this.username = username;
         this.password = password;
     }
-    
-    
+
 }

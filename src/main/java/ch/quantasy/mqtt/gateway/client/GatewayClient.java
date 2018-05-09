@@ -54,9 +54,13 @@ import ch.quantasy.mqtt.gateway.client.message.PublishingMessageCollector;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -329,5 +333,43 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
     public <M extends Message> SortedSet<M> toMessageSet(byte[] payload, Class<M> messageClass) throws Exception {
         JavaType endType = contract.getObjectMapper().getTypeFactory().constructCollectionType(TreeSet.class, messageClass);
         return contract.getObjectMapper().readValue(payload, endType);
+    }
+    
+    /**
+     * This method allows to map fields from a foreign message type into a desired message type.
+     * It accepts the payload and tries its best to translate and fill in the gaps and returning the sorted set of messages.
+     * @param <M> 
+     * @param payload The serialized set of source messages
+     * @param messageClass The MessageClass to map into (Target)
+     * @param targetSourceMap The translation map target field, source field.
+     * @return The sorted set of desired target messages
+     * @throws Exception 
+     */
+    public <M extends Message> SortedSet<M> map(byte[] payload, Class<M> messageClass, Map<String, String> targetSourceMap) throws Exception {
+        SortedSet<M> messageSet = new TreeSet<>();
+        List<M> messageList = new ArrayList<>();
+
+        ObjectNode targetNode = getContract().getObjectMapper().createObjectNode();
+        JsonNode tree = (getContract().getObjectMapper().readTree(payload));
+        M message = null;
+        if (targetSourceMap != null) {
+            for (Map.Entry<String, String> entry : targetSourceMap.entrySet()) {
+                List<JsonNode> values = tree.findValues(entry.getValue());
+                if (values != null) {
+                    int i = 0;
+                    for (JsonNode value : values) {
+                        targetNode.replace(entry.getKey(), value);
+                        if (messageList.isEmpty() || messageList.size() < (i + 1)) {
+                            messageList.add((M) getContract().getObjectMapper().treeToValue(targetNode, messageClass));
+                        } else {
+                            getContract().getObjectMapper().readerForUpdating(messageList.get(i)).treeToValue(targetNode, messageClass);
+                        }
+                        i++;
+                    }
+                }
+            }
+            messageSet.addAll(messageList);
+        }
+        return messageSet;
     }
 }

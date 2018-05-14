@@ -41,34 +41,12 @@
  */
 package ch.quantasy.mqtt.gateway.client.reference;
 
-import ch.quantasy.mqtt.gateway.client.message.AMessage;
-import ch.quantasy.mqtt.gateway.client.message.annotations.Nullable;
-import ch.quantasy.mqtt.gateway.client.message.annotations.Topic;
-import com.sun.istack.internal.NotNull;
-import java.util.HashMap;
-import java.util.Map;
+import ch.quantasy.mqtt.gateway.client.message.AnIntent;
 
 /**
  *
  * @author reto
  */
-public class Reference extends AMessage {
-    @NotNull
-    public String sourceTopic;
-    @Nullable
-    public String targetTopic;
-    @Nullable
-    public Map<String, String> targetSourceMap;
-    public boolean synchronize;
-
-    public Reference() {
-        this.targetSourceMap = new HashMap<>();
-    }
-    
-    
-    
-    
-    
-    
-    
+public class PositionIntent extends AnIntent{
+    XYZIntent xyz;
 }

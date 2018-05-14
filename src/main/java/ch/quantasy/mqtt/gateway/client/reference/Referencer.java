@@ -41,9 +41,13 @@
  */
 package ch.quantasy.mqtt.gateway.client.reference;
 
+import ch.quantasy.mqtt.communication.mqtt.MQTTCommunicationIntent;
+import ch.quantasy.mqtt.communication.mqtt.MQTTCommunicationStatus;
 import ch.quantasy.mqtt.gateway.client.GatewayClient;
 import ch.quantasy.mqtt.gateway.client.contract.AServiceContract;
 import ch.quantasy.mqtt.gateway.client.message.Message;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
@@ -67,23 +71,38 @@ public class Referencer<M extends Message, S extends AServiceContract> {
     }
 
     public void doIt(Reference reference) {
-        referenceMap.put(reference.topic, reference);
-        gatewayClient.subscribe(reference.topic, (topic, payload) -> {
-            SortedSet<M> messages = gatewayClient.map(payload, targetMessageClass, reference.TargetSourceMap);
-            System.out.println(Arrays.toString(messages.toArray()));
-        });
-
+        referenceMap.put(reference.sourceTopic, reference);
+        if (reference.targetSourceMap.isEmpty()) {
+            gatewayClient.unsubscribe(reference.sourceTopic);
+        } else {
+            gatewayClient.subscribe(reference.sourceTopic, (topic, payload) -> {
+                byte[] o=gatewayClient.map(payload, reference.targetSourceMap);
+                System.out.println(new String(o));
+                //System.out.println(Arrays.toString(messages.toArray()));
+            });
+        }
     }
 
     public static void main(String[] args) throws Exception {
         GatewayClient gc = new GatewayClient(URI.create("tcp://127.0.0.1:1883"), "REFERENCER", new ReferencerContract("", "Referencer"));
+        MQTTCommunicationIntent intent= gc.getIntent();
+                intent.isCleanSession=true;
+                gc.setIntent(intent);
         gc.connect();
         Referencer referencer = new Referencer(gc, XYZIntent.class);
         Reference reference = new Reference();
-        reference.topic = "TF/OutdoorWeather/U/DYp/E/humidity/+";
-        reference.TargetSourceMap.put("x", "value");
-        reference.TargetSourceMap.put("y", "id");
-        reference.TargetSourceMap.put("timeStamp", "timeStamp");
+        reference.sourceTopic = gc.getContract().INTENT;
+        PositionIntent posIntent=new PositionIntent();
+        posIntent.xyz=new XYZIntent();
+        posIntent.xyz.x=2;
+        posIntent.xyz.y=4;
+        posIntent.xyz.z=6;
+        
+        
+        for(int i=0;i<3;i++)gc.readyToPublish(reference.sourceTopic, posIntent);
+        reference.targetSourceMap.put("position/a", "/xyz/x");
+        reference.targetSourceMap.put("position/b", "/xyz/y");
+        reference.targetSourceMap.put("timeStamp", "/timeStamp");
         referencer.doIt(reference);
         System.in.read();
     }

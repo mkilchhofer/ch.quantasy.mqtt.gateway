@@ -41,13 +41,13 @@
  */
 package ch.quantasy.mqtt.gateway.client.reference;
 
-import ch.quantasy.mqtt.gateway.client.message.AnIntent;
+import ch.quantasy.mqtt.gateway.client.message.annotations.AValidator;
 
 /**
  *
  * @author reto
  */
-public class XYZIntent extends AnIntent{
+public class XYZIntent extends AValidator{
     public int x;
     public int y;
     public int z;

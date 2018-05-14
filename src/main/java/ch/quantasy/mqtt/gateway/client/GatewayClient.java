@@ -51,16 +51,17 @@ import ch.quantasy.mqtt.communication.mqtt.Testament;
 import ch.quantasy.mqtt.gateway.client.message.Message;
 import ch.quantasy.mqtt.gateway.client.message.MessageCollector;
 import ch.quantasy.mqtt.gateway.client.message.PublishingMessageCollector;
+import com.fasterxml.jackson.core.JsonPointer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -180,11 +181,15 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         }
     }
 
+    public void setIntent(MQTTCommunicationIntent intent) {
+        communication.setIntent(intent);
+    }
+
     public void connect() throws MqttException {
         if (communication.isConnected()) {
             return;
         }
-        MQTTCommunicationIntent intent=communication.getIntent();
+        MQTTCommunicationIntent intent = communication.getIntent();
         intent.connect = true;
         communication.setIntent(intent);
         try {
@@ -209,7 +214,7 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         } catch (JsonProcessingException ex) {
             Logger.getLogger(GatewayClient.class.getName()).log(Level.SEVERE, null, ex);
         }
-        MQTTCommunicationIntent intent=communication.getIntent();
+        MQTTCommunicationIntent intent = communication.getIntent();
         intent.connect = false;
         communication.setIntent(intent);
     }
@@ -271,8 +276,8 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         connectionFuture = TIMER_SERVICE.scheduleAtFixedRate(() -> {
             try {
                 if (connectionFuture != null) {
-                    MQTTCommunicationIntent intent=communication.getIntent();
-                    intent.connect=true;
+                    MQTTCommunicationIntent intent = communication.getIntent();
+                    intent.connect = true;
                     communication.setIntent(intent);
                     connectionFuture.cancel(false);
                     connectionFuture = null;
@@ -334,42 +339,71 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
         JavaType endType = contract.getObjectMapper().getTypeFactory().constructCollectionType(TreeSet.class, messageClass);
         return contract.getObjectMapper().readValue(payload, endType);
     }
-    
+
     /**
-     * This method allows to map fields from a foreign message type into a desired message type.
-     * It accepts the payload and tries its best to translate and fill in the gaps and returning the sorted set of messages.
-     * @param <M> 
-     * @param payload The serialized set of source messages
+     *
+     * This method allows to map a yaml document into an other yaml document. It
+     * accepts the payload and tries its best to translate and fill in the gaps
+     * and returning the mapped yaml document..
+     *
      * @param messageClass The MessageClass to map into (Target)
      * @param targetSourceMap The translation map target field, source field.
      * @return The sorted set of desired target messages
-     * @throws Exception 
+     * @throws Exception
+     *
+     * http://proliferay.com/create-json-by-jackson-api/
+     * https://cassiomolin.com/2016/07/13/using-jackson-and-json-path-to-query-and-parse-an-arbitrary-json-node/
+     *
+     * @param payload The serialized set of source messages
+     * @param targetSourceMap The translation map target field, source field
+     * (written as XTree)
+     * @return The translated and serialized yaml structure.
+     * @throws Exception
      */
-    public <M extends Message> SortedSet<M> map(byte[] payload, Class<M> messageClass, Map<String, String> targetSourceMap) throws Exception {
-        SortedSet<M> messageSet = new TreeSet<>();
-        List<M> messageList = new ArrayList<>();
+    public byte[] map(byte[] payload, Map<String, String> targetSourceMap) throws Exception {
+        final String separator = Character.toString(JsonPointer.SEPARATOR);
+        ArrayNode arrayNode = getContract().getObjectMapper().createArrayNode();
+        JsonNode sourceTree = (getContract().getObjectMapper().readTree(payload));
+        System.out.println("tree: " + sourceTree);
 
-        ObjectNode targetNode = getContract().getObjectMapper().createObjectNode();
-        JsonNode tree = (getContract().getObjectMapper().readTree(payload));
-        M message = null;
-        if (targetSourceMap != null) {
-            for (Map.Entry<String, String> entry : targetSourceMap.entrySet()) {
-                List<JsonNode> values = tree.findValues(entry.getValue());
-                if (values != null) {
-                    int i = 0;
-                    for (JsonNode value : values) {
-                        targetNode.replace(entry.getKey(), value);
-                        if (messageList.isEmpty() || messageList.size() < (i + 1)) {
-                            messageList.add((M) getContract().getObjectMapper().treeToValue(targetNode, messageClass));
-                        } else {
-                            getContract().getObjectMapper().readerForUpdating(messageList.get(i)).treeToValue(targetNode, messageClass);
-                        }
-                        i++;
-                    }
-                }
+        JsonNode element = sourceTree;
+        //Check if the tree (payload) is an array of elements
+        Iterator<JsonNode> elements = null;
+        if (sourceTree.isArray()) {
+            elements = sourceTree.elements();
+            if (elements.hasNext()) {
+                element = elements.next();
             }
-            messageSet.addAll(messageList);
         }
-        return messageSet;
+
+        while (element != null) {
+
+            ObjectNode objectNode = getContract().getObjectMapper().createObjectNode();
+            String yamlStructure = "";
+            // Create a new yaml structure using the target fields and the source values.
+            for (Map.Entry<String, String> entry : targetSourceMap.entrySet()) {
+                yamlStructure += entry.getKey();
+                int spacer = 0;
+                while (yamlStructure.contains(separator)) {
+                    String spaces = "  ";
+                    for (int i = 0; i < spacer; i++) {
+                        spaces += "  ";
+                    }
+                    yamlStructure = yamlStructure.replaceFirst(separator, ": \n" + spaces);
+                    spacer++;
+
+                }
+                yamlStructure += ": " + element.at(entry.getValue()) + "\n";
+            }
+            getContract().getObjectMapper().readerForUpdating(objectNode).readValue(yamlStructure);
+            arrayNode.add(objectNode);
+            if (elements != null && elements.hasNext()) {
+                element = elements.next();
+            } else {
+                element = null;
+            }
+        }
+        return getContract().getObjectMapper().writeValueAsBytes(arrayNode);
     }
+
 }

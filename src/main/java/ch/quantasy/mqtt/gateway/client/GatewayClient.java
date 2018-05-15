@@ -48,6 +48,7 @@ import ch.quantasy.mqtt.communication.mqtt.MQTTCommunication;
 import ch.quantasy.mqtt.communication.mqtt.MQTTCommunicationIntent;
 //import ch.quantasy.mqtt.communication.mqtt.MQTTCommunicationIntent;
 import ch.quantasy.mqtt.communication.mqtt.Testament;
+import ch.quantasy.mqtt.gateway.client.message.Intent;
 import ch.quantasy.mqtt.gateway.client.message.Message;
 import ch.quantasy.mqtt.gateway.client.message.MessageCollector;
 import ch.quantasy.mqtt.gateway.client.message.PublishingMessageCollector;
@@ -333,6 +334,10 @@ public class GatewayClient<S extends AServiceContract> implements MqttCallback {
 
     public static ScheduledExecutorService getTIMER_SERVICE() {
         return TIMER_SERVICE;
+    }
+
+    public <I extends Intent> SortedSet<I> mapToIntentSet(byte[] payload, Class<I> intentClass, Map<String, String> targetSourceMap) throws Exception {
+        return toMessageSet(map(payload, targetSourceMap), intentClass);
     }
 
     public <M extends Message> SortedSet<M> toMessageSet(byte[] payload, Class<M> messageClass) throws Exception {

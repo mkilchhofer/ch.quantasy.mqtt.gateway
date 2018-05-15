@@ -55,8 +55,10 @@ import java.util.Map;
 public class Reference extends AMessage {
     @NotNull
     public String sourceTopic;
-    @Nullable
-    public String targetTopic;
+   
+   // Not yet supported!
+   //@Nullable
+   // public String targetTopic;
     @Nullable
     public Map<String, String> targetSourceMap;
     public boolean synchronize;

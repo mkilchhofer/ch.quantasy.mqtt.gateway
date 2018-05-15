@@ -76,32 +76,39 @@ public class Referencer<M extends Message, S extends AServiceContract> {
             gatewayClient.unsubscribe(reference.sourceTopic);
         } else {
             gatewayClient.subscribe(reference.sourceTopic, (topic, payload) -> {
-                byte[] o=gatewayClient.map(payload, reference.targetSourceMap);
-                System.out.println(new String(o));
-                //System.out.println(Arrays.toString(messages.toArray()));
+                //if (reference.targetTopic != null) {
+                //    byte[] o = gatewayClient.map(payload, reference.targetSourceMap);
+                //    System.out.println(new String(o));
+                //    //Now a raw-publish should occur
+                //    //gatewayClient.rawPublish(reference.targetTopic, o);
+                //} else {
+                    SortedSet<PositionIntent> positions = gatewayClient.mapToIntentSet(payload, PositionIntent.class, reference.targetSourceMap);
+                    System.out.println(Arrays.toString(positions.toArray()));
+                //}
             });
         }
     }
 
     public static void main(String[] args) throws Exception {
         GatewayClient gc = new GatewayClient(URI.create("tcp://127.0.0.1:1883"), "REFERENCER", new ReferencerContract("", "Referencer"));
-        MQTTCommunicationIntent intent= gc.getIntent();
-                intent.isCleanSession=true;
-                gc.setIntent(intent);
+        MQTTCommunicationIntent intent = gc.getIntent();
+        intent.isCleanSession = true;
+        gc.setIntent(intent);
         gc.connect();
-        Referencer referencer = new Referencer(gc, XYZIntent.class);
+        Referencer referencer = new Referencer(gc, XYZPosition.class);
         Reference reference = new Reference();
         reference.sourceTopic = gc.getContract().INTENT;
-        PositionIntent posIntent=new PositionIntent();
-        posIntent.xyz=new XYZIntent();
-        posIntent.xyz.x=2;
-        posIntent.xyz.y=4;
-        posIntent.xyz.z=6;
-        
-        
-        for(int i=0;i<3;i++)gc.readyToPublish(reference.sourceTopic, posIntent);
-        reference.targetSourceMap.put("position/a", "/xyz/x");
-        reference.targetSourceMap.put("position/b", "/xyz/y");
+        PositionEvent positionEvent = new PositionEvent();
+        positionEvent.xyz = new XYZPosition();
+        positionEvent.xyz.x = 2;
+        positionEvent.xyz.y = 4;
+        positionEvent.xyz.z = 6;
+
+        for (int i = 0; i < 3; i++) {
+            gc.readyToPublish(reference.sourceTopic, positionEvent);
+        }
+        reference.targetSourceMap.put("pos/a", "/xyz/x");
+        reference.targetSourceMap.put("pos/b", "/xyz/y");
         reference.targetSourceMap.put("timeStamp", "/timeStamp");
         referencer.doIt(reference);
         System.in.read();

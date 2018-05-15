@@ -41,13 +41,15 @@
  */
 package ch.quantasy.mqtt.gateway.client.reference;
 
-import ch.quantasy.mqtt.gateway.client.message.AnEvent;
-import ch.quantasy.mqtt.gateway.client.message.AnIntent;
+import ch.quantasy.mqtt.gateway.client.message.AMessage;
 
 /**
  *
  * @author reto
  */
-public class PositionIntent extends AnIntent{
-    ABPos pos;
+public class XYZPosition extends AMessage{
+    public int x;
+    public int y;
+    public int z;
+    
 }

@@ -119,14 +119,14 @@ public class MQTTCommunication implements IMqttActionListener {
                 try {
                     connect();
                 } catch (MqttException ex) {
-                    Logger.getLogger(MQTTCommunication.class.getName()).log(Level.SEVERE, null, ex);
+                    LOG.error("", ex);
                 }
             }
             if (!this.intent.connect) {
                 try {
                     disconnect();
                 } catch (MqttException ex) {
-                    Logger.getLogger(MQTTCommunication.class.getName()).log(Level.SEVERE, null, ex);
+                    LOG.error("", ex);
                 }
             }
 
@@ -240,7 +240,7 @@ public class MQTTCommunication implements IMqttActionListener {
 
     @Override
     public void onSuccess(IMqttToken imt) {
-        LOG.info("{}", "success");
+        LOG.info("success");
     }
 
     @Override

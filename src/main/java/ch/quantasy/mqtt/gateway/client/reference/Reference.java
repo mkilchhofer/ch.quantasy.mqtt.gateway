@@ -42,9 +42,8 @@
 package ch.quantasy.mqtt.gateway.client.reference;
 
 import ch.quantasy.mqtt.gateway.client.message.AMessage;
+import ch.quantasy.mqtt.gateway.client.message.annotations.NonNull;
 import ch.quantasy.mqtt.gateway.client.message.annotations.Nullable;
-import ch.quantasy.mqtt.gateway.client.message.annotations.Topic;
-import com.sun.istack.internal.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -53,7 +52,7 @@ import java.util.Map;
  * @author reto
  */
 public class Reference extends AMessage {
-    @NotNull
+    @NonNull
     public String sourceTopic;
    
    // Not yet supported!

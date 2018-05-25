@@ -46,6 +46,9 @@ import ch.quantasy.mqtt.gateway.client.message.annotations.Default;
 import ch.quantasy.mqtt.gateway.client.message.annotations.Period;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.Date;
 
 /**
  *
@@ -58,7 +61,14 @@ public class AMessage extends AValidator implements Message {
     private long timeStamp;
 
     public AMessage() {
-        timeStamp = System.nanoTime();
+        Instant instant=Instant.now();
+        int nanos=instant.getNano();
+        //Expensive HACK for JDK earlier than Java9
+        //This HACK does not give precision Time over multiple VMs
+        if(nanos%1000000==0){
+            nanos+=(int)System.nanoTime()%1000000;
+        }
+        timeStamp = instant.getEpochSecond()*1000000000+nanos;
     }
 
     @Override
@@ -107,5 +117,4 @@ public class AMessage extends AValidator implements Message {
         sb.deleteCharAt(sb.lastIndexOf(","));
         return sb.append("}").toString();
     }
-
 }
